@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>导视系统 · 管理后台</title>
+  <link rel="stylesheet" href="/admin/css/admin.css" />
+</head>
+<body>
+
+  <!-- 登录 -->
+  <div id="login" class="login-mask">
+    <div class="login-card">
+      <div class="login-logo">🧭</div>
+      <h2>智能导视系统 · 管理后台</h2>
+      <p class="login-sub">请输入管理密码登录</p>
+      <input type="password" id="loginPass" placeholder="管理密码" autocomplete="off" />
+      <button class="btn primary" id="loginBtn">登 录</button>
+      <p class="login-tip" id="loginTip">默认密码 admin123</p>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="adminApp" class="admin" hidden>
+    <aside class="side">
+      <div class="side-brand"><span>🧭</span> 导视后台</div>
+      <nav class="side-nav" id="sideNav">
+        <button data-tab="overview" class="on">📊 数据概览</button>
+        <button data-tab="floors">🏢 楼层管理</button>
+        <button data-tab="shops">🛍️ 店铺管理</button>
+        <button data-tab="facilities">🚻 设施管理</button>
+        <button data-tab="promos">🎁 活动管理</button>
+        <button data-tab="banners">📺 Banner 管理</button>
+        <button data-tab="screen">🖥️ 待机页配置</button>
+        <button data-tab="guide">ℹ️ 服务指南</button>
+        <button data-tab="screens">🖥️ 多屏管理</button>
+        <button data-tab="map">🗺️ 平面编辑</button>
+        <button data-tab="graph">🕸️ 节点与连线</button>
+        <button data-tab="settings">⚙️ 系统设置</button>
+      </nav>
+      <div class="side-foot">
+        <a href="/" target="_blank">↗ 打开前台导视</a>
+        <button id="logout">退出登录</button>
+      </div>
+    </aside>
+    <main class="content" id="content"></main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="/admin/js/admin.js"></script>
+</body>
+</html>

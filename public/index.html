@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>星光汇购物中心 · 智能导视系统</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- 顶部导航 -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">🧭</span>
+        <div class="brand-txt">
+          <div class="mall-name" id="mallName">商场智能导视</div>
+          <div class="mall-slogan" id="mallSlogan"></div>
+        </div>
+      </div>
+      <nav class="topnav" id="topnav">
+        <button class="tn active" data-go="home">🏠 首页</button>
+        <button class="tn" data-go="floor">🗺️ 楼层导购</button>
+        <button class="tn" data-go="brand">🛍️ 品牌导购</button>
+        <button class="tn" data-go="promo">🎁 优惠活动</button>
+        <button class="tn" data-go="service">ℹ️ 服务指南</button>
+      </nav>
+      <div class="clock" id="clock">--:--</div>
+      <div class="screen-badge" id="screenBadge" hidden></div>
+    </header>
+
+    <!-- 多屏分发：本机专属公告（后台按屏幕配置） -->
+    <div id="screenNotice" class="screen-notice" hidden></div>
+
+    <main>
+
+      <!-- 首页 -->
+      <section id="screen-home" class="screen active">
+        <div class="home-hero" id="homeBanner"></div>
+        <div class="home-quick" id="homeQuick"></div>
+        <div class="home-foot">
+          <span id="homeAddress"></span>
+          <span id="homeHours"></span>
+          <span id="homePhone"></span>
+        </div>
+      </section>
+
+      <!-- 楼层导购 -->
+      <section id="screen-floor" class="screen">
+        <aside class="floor-rail" id="floorRail"></aside>
+        <div class="map-area">
+          <div class="map-toolbar">
+            <div class="fac-filter" id="facFilter"></div>
+            <div class="map-tools">
+              <button class="base-toggle on" id="toggleBase" title="显示 / 隐藏底图图层">底图</button>
+              <button id="zoomOut" title="缩小">－</button>
+              <button id="zoomReset" title="复位">⟳</button>
+              <button id="zoomIn" title="放大">＋</button>
+            </div>
+          </div>
+          <div class="map-wrap">
+            <svg id="mapSvg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="5" result="b" />
+                  <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+              <g id="mapRoot">
+                <g id="gPlan"></g>
+                <g id="gWalls"></g>
+                <g id="gShops"></g>
+                <g id="gFacilities"></g>
+              </g>
+              <g id="gMarkers"></g>
+            </svg>
+            <div class="map-floor-name" id="mapFloorName"></div>
+            <div class="map-legend">
+              <span><i class="dot shop"></i> 店铺</span>
+              <span><i class="dot fac"></i> 公共设施</span>
+              <span><i class="dot you"></i> 您在这里</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 品牌导购 -->
+      <section id="screen-brand" class="screen">
+        <div class="brand-head">
+          <div class="search-box">
+            <span class="s-ico">🔍</span>
+            <input type="text" id="brandSearch" placeholder="搜索品牌 / 店铺名称…" autocomplete="off" />
+            <button class="s-clear" id="brandClear" hidden>✕</button>
+          </div>
+          <div class="cat-filter" id="catFilter"></div>
+        </div>
+        <div class="brand-body">
+          <div class="brand-grid" id="brandGrid"></div>
+          <div class="az-index" id="azIndex"></div>
+        </div>
+      </section>
+
+      <!-- 优惠活动 -->
+      <section id="screen-promo" class="screen">
+        <div class="promo-grid" id="promoGrid"></div>
+      </section>
+
+      <!-- 服务指南 -->
+      <section id="screen-service" class="screen">
+        <div class="svc-head" id="svcHead" style="display:none">
+          <h2 id="svcTitle">服务指南</h2>
+          <div class="svc-sub" id="svcSub"></div>
+        </div>
+        <div class="service-grid" id="serviceGrid"></div>
+      </section>
+
+      <!-- 路线导航 -->
+      <section id="screen-guide" class="screen">
+        <div class="guide-toolbar">
+          <button class="btn-back" data-go="floor">‹ 返回地图</button>
+          <div class="guide-title" id="guideTitle">路线指引</div>
+          <div class="floor-switch" id="floorSwitch"></div>
+          <button class="btn-back" data-go="home">⌂ 首页</button>
+        </div>
+        <div class="guide-body">
+          <div class="map-wrap guide-map">
+            <svg id="guideSvg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <marker id="pathArrow" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill="#ffd166" />
+                </marker>
+                <filter id="pathGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="6" result="b" />
+                  <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+              <g id="ggRoot">
+                <g id="ggPlan"></g>
+                <g id="ggWalls"></g>
+                <g id="ggShops"></g>
+                <g id="ggFacilities"></g>
+                <g id="ggPath"></g>
+              </g>
+              <g id="ggMarkers"></g>
+            </svg>
+            <div class="map-floor-name" id="guideFloorName"></div>
+            <div class="map-legend">
+              <span><i class="dot start"></i> 起点</span>
+              <span><i class="dot end"></i> 目的地</span>
+              <span><i class="dot path"></i> 推荐路线</span>
+            </div>
+          </div>
+          <aside class="steps-panel">
+            <div class="steps-head">步行指引</div>
+            <div class="steps-total" id="stepsTotal"></div>
+            <ol class="steps-list" id="stepsList"></ol>
+            <div class="steps-foot" id="stepsFoot"></div>
+          </aside>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 详情弹窗 -->
+  <div id="detailModal" class="modal-mask">
+    <div class="modal detail-modal">
+      <div class="detail-hero" id="detailHero">
+        <button class="detail-close" id="detailClose">✕</button>
+        <div class="detail-hero-icon" id="detailIcon">📍</div>
+        <div class="detail-hero-name" id="detailName"></div>
+        <div class="detail-hero-meta" id="detailMeta"></div>
+      </div>
+      <div class="detail-body">
+        <p class="detail-desc" id="detailDesc"></p>
+        <div class="detail-tags" id="detailTags"></div>
+        <div class="detail-actions">
+          <button class="btn ghost" id="detailMapBtn">📍 地图定位</button>
+          <button class="btn primary" id="detailNavBtn">🧭 开始导航</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 活动详情 / 素材展示层（图片 · 视频 · 互动网页） -->
+  <div id="mediaModal" class="media-mask">
+    <div class="media-panel">
+      <div class="media-head">
+        <div class="media-title" id="mediaTitle">活动详情</div>
+        <button class="media-x" id="mediaClose">✕</button>
+      </div>
+      <div class="media-body" id="mediaBody"></div>
+      <div class="media-foot" id="mediaFoot"></div>
+    </div>
+  </div>
+
+  <!-- 待机页（屏保）：自定义轮播（图片 / 视频 / HTML5 互动页） -->
+  <div id="screensaver" class="screensaver">
+    <div class="ss-inner" id="ssInner"></div>
+    <div class="ss-brand" id="ssBrand"><span class="ss-logo">🧭</span><span id="ssMallName"></span></div>
+    <div class="ss-clock" id="ssClock">--:--</div>
+    <div class="ss-progress" id="ssProgress"><i></i></div>
+    <div class="ss-hint" id="ssHint">轻触屏幕任意位置继续</div>
+    <div class="ss-toast" id="ssToast"></div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

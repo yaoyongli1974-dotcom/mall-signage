@@ -1,0 +1,3347 @@
+{
+  "settings": {
+    "mallName": "星光汇购物中心",
+    "slogan": "一站式购物 · 餐饮 · 娱乐中心",
+    "address": "市中心商圈 · 星光汇广场 1 号",
+    "servicePhone": "400-800-6666",
+    "businessHours": "10:00 - 22:00",
+    "startNode": "N36",
+    "scalePxPerM": 10,
+    "idleSeconds": 90,
+    "screensaverSeconds": 45,
+    "screensaver": {
+      "enabled": true,
+      "idleSeconds": 45,
+      "interval": 8,
+      "transition": "fade",
+      "order": "sequence",
+      "loop": true,
+      "mute": true,
+      "videoMode": "timed",
+      "showClock": true,
+      "showMallName": true,
+      "showHint": true,
+      "showProgress": true,
+      "dim": 0.15,
+      "tapAction": "activity",
+      "pageTap": "activity",
+      "items": [
+        {
+          "id": "SC1",
+          "enabled": true,
+          "type": "image",
+          "url": "/uploads/ss_poster_1.svg",
+          "title": "",
+          "sub": "",
+          "duration": 8,
+          "promoId": ""
+        },
+        {
+          "id": "SC2",
+          "enabled": true,
+          "type": "image",
+          "url": "/uploads/ss_poster_2.svg",
+          "title": "",
+          "sub": "",
+          "duration": 8,
+          "promoId": "PR1"
+        },
+        {
+          "id": "SC3",
+          "enabled": true,
+          "type": "page",
+          "url": "/uploads/ss_demo_h5.html",
+          "title": "",
+          "sub": "",
+          "duration": 25,
+          "promoId": "PR5"
+        },
+        {
+          "id": "SC4",
+          "enabled": true,
+          "type": "image",
+          "url": "/uploads/ss_poster_3.svg",
+          "title": "",
+          "sub": "",
+          "duration": 8,
+          "promoId": ""
+        }
+      ]
+    },
+    "adminPass": "admin123"
+  },
+  "floors": [
+    {
+      "id": "F1",
+      "name": "负一层",
+      "short": "B1",
+      "level": -1,
+      "theme": "精品超市 · 美食广场 · 生活服务",
+      "plan": {
+        "mode": "image",
+        "image": "/uploads/plan_F1.svg",
+        "imageRect": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 700
+        },
+        "imageOpacity": 1,
+        "showImage": true,
+        "width": 1000,
+        "height": 700,
+        "scalePxPerM": 10,
+        "originX": 0,
+        "originY": 0,
+        "walls": [],
+        "objects": []
+      }
+    },
+    {
+      "id": "F2",
+      "name": "一层",
+      "short": "1F",
+      "level": 1,
+      "theme": "珠宝美妆 · 轻奢名品",
+      "plan": {
+        "mode": "image",
+        "image": "/uploads/plan_F2.svg",
+        "imageRect": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 700
+        },
+        "imageOpacity": 1,
+        "showImage": true,
+        "width": 1000,
+        "height": 700,
+        "scalePxPerM": 10,
+        "originX": 0,
+        "originY": 0,
+        "walls": [],
+        "objects": []
+      }
+    },
+    {
+      "id": "F3",
+      "name": "二层",
+      "short": "2F",
+      "level": 2,
+      "theme": "时尚女装 · 鞋包内衣",
+      "plan": {
+        "mode": "image",
+        "image": "/uploads/plan_F3.svg",
+        "imageRect": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 700
+        },
+        "imageOpacity": 1,
+        "showImage": true,
+        "width": 1000,
+        "height": 700,
+        "scalePxPerM": 10,
+        "originX": 0,
+        "originY": 0,
+        "walls": [],
+        "objects": []
+      }
+    },
+    {
+      "id": "F4",
+      "name": "三层",
+      "short": "3F",
+      "level": 3,
+      "theme": "男装运动 · 儿童数码",
+      "plan": {
+        "mode": "image",
+        "image": "/uploads/plan_F4.svg",
+        "imageRect": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 700
+        },
+        "imageOpacity": 1,
+        "showImage": true,
+        "width": 1000,
+        "height": 700,
+        "scalePxPerM": 10,
+        "originX": 0,
+        "originY": 0,
+        "walls": [],
+        "objects": []
+      }
+    },
+    {
+      "id": "F5",
+      "name": "四层",
+      "short": "4F",
+      "level": 4,
+      "theme": "环球美食 · 影院娱乐",
+      "plan": {
+        "mode": "image",
+        "image": "/uploads/plan_F5.svg",
+        "imageRect": {
+          "x": 0,
+          "y": 0,
+          "w": 1000,
+          "h": 700
+        },
+        "imageOpacity": 1,
+        "showImage": true,
+        "width": 1000,
+        "height": 700,
+        "scalePxPerM": 10,
+        "originX": 0,
+        "originY": 0,
+        "walls": [],
+        "objects": []
+      }
+    }
+  ],
+  "shops": [
+    {
+      "id": "S1",
+      "name": "永辉超市",
+      "floorId": "F1",
+      "cat": "supermarket",
+      "letter": "Y",
+      "x": 53,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#f4a300",
+      "phone": "400-800-2000",
+      "hours": "10:00 - 22:00",
+      "desc": "永辉超市（负一层 · 超市便利），欢迎光临。",
+      "tags": [
+        "超市便利",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S2",
+      "name": "屈臣氏",
+      "floorId": "F1",
+      "cat": "beauty",
+      "letter": "Q",
+      "x": 278,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#ec407a",
+      "phone": "400-800-2001",
+      "hours": "10:00 - 22:00",
+      "desc": "屈臣氏（负一层 · 美容个护），欢迎光临。",
+      "tags": [
+        "美容个护",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S3",
+      "name": "名创优品",
+      "floorId": "F1",
+      "cat": "home",
+      "letter": "M",
+      "x": 503,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#26a69a",
+      "phone": "400-800-2002",
+      "hours": "10:00 - 22:00",
+      "desc": "名创优品（负一层 · 家居生活），欢迎光临。",
+      "tags": [
+        "家居生活",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S4",
+      "name": "便利蜂",
+      "floorId": "F1",
+      "cat": "supermarket",
+      "letter": "B",
+      "x": 728,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#f4a300",
+      "phone": "400-800-2003",
+      "hours": "10:00 - 22:00",
+      "desc": "便利蜂（负一层 · 超市便利），欢迎光临。",
+      "tags": [
+        "超市便利",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S5",
+      "name": "小米之家",
+      "floorId": "F1",
+      "cat": "digital",
+      "letter": "X",
+      "x": 815,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#5b6ce0",
+      "phone": "400-800-2004",
+      "hours": "10:00 - 22:00",
+      "desc": "小米之家（负一层 · 数码家电），欢迎光临。",
+      "tags": [
+        "数码家电",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S6",
+      "name": "老百姓大药房",
+      "floorId": "F1",
+      "cat": "service",
+      "letter": "L",
+      "x": 815,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#78909c",
+      "phone": "400-800-2005",
+      "hours": "10:00 - 22:00",
+      "desc": "老百姓大药房（负一层 · 生活服务），欢迎光临。",
+      "tags": [
+        "生活服务",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S7",
+      "name": "美食广场",
+      "floorId": "F1",
+      "cat": "food",
+      "letter": "M",
+      "x": 53,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#ef6c4d",
+      "phone": "400-800-2006",
+      "hours": "10:00 - 22:00",
+      "desc": "美食广场（负一层 · 餐饮美食），欢迎光临。",
+      "tags": [
+        "餐饮美食",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S8",
+      "name": "面包新语",
+      "floorId": "F1",
+      "cat": "dessert",
+      "letter": "M",
+      "x": 278,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#e8a33d",
+      "phone": "400-800-2007",
+      "hours": "10:00 - 22:00",
+      "desc": "面包新语（负一层 · 烘焙甜品），欢迎光临。",
+      "tags": [
+        "烘焙甜品",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S9",
+      "name": "星巴克",
+      "floorId": "F1",
+      "cat": "drink",
+      "letter": "X",
+      "x": 503,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#9c7b6b",
+      "phone": "400-800-2008",
+      "hours": "10:00 - 22:00",
+      "desc": "星巴克（负一层 · 茶饮咖啡），欢迎光临。",
+      "tags": [
+        "茶饮咖啡",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S10",
+      "name": "中国移动营业厅",
+      "floorId": "F1",
+      "cat": "service",
+      "letter": "Z",
+      "x": 728,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#78909c",
+      "phone": "400-800-2009",
+      "hours": "10:00 - 22:00",
+      "desc": "中国移动营业厅（负一层 · 生活服务），欢迎光临。",
+      "tags": [
+        "生活服务",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S11",
+      "name": "洗衣工坊",
+      "floorId": "F1",
+      "cat": "service",
+      "letter": "X",
+      "x": 50,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#78909c",
+      "phone": "400-800-2010",
+      "hours": "10:00 - 22:00",
+      "desc": "洗衣工坊（负一层 · 生活服务），欢迎光临。",
+      "tags": [
+        "生活服务",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S12",
+      "name": "顺丰驿站",
+      "floorId": "F1",
+      "cat": "service",
+      "letter": "S",
+      "x": 50,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#78909c",
+      "phone": "400-800-2011",
+      "hours": "10:00 - 22:00",
+      "desc": "顺丰驿站（负一层 · 生活服务），欢迎光临。",
+      "tags": [
+        "生活服务",
+        "负一层"
+      ]
+    },
+    {
+      "id": "S13",
+      "name": "丝芙兰",
+      "floorId": "F2",
+      "cat": "cosmetics",
+      "letter": "S",
+      "x": 53,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#f06292",
+      "phone": "400-800-2012",
+      "hours": "10:00 - 22:00",
+      "desc": "丝芙兰（一层 · 美妆），欢迎光临。",
+      "tags": [
+        "美妆",
+        "一层"
+      ]
+    },
+    {
+      "id": "S14",
+      "name": "CHANEL 香奈儿",
+      "floorId": "F2",
+      "cat": "cosmetics",
+      "letter": "C",
+      "x": 278,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#f06292",
+      "phone": "400-800-2013",
+      "hours": "10:00 - 22:00",
+      "desc": "CHANEL 香奈儿（一层 · 美妆），欢迎光临。",
+      "tags": [
+        "美妆",
+        "一层"
+      ]
+    },
+    {
+      "id": "S15",
+      "name": "雅诗兰黛",
+      "floorId": "F2",
+      "cat": "cosmetics",
+      "letter": "Y",
+      "x": 503,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#f06292",
+      "phone": "400-800-2014",
+      "hours": "10:00 - 22:00",
+      "desc": "雅诗兰黛（一层 · 美妆），欢迎光临。",
+      "tags": [
+        "美妆",
+        "一层"
+      ]
+    },
+    {
+      "id": "S16",
+      "name": "周大福",
+      "floorId": "F2",
+      "cat": "jewelry",
+      "letter": "Z",
+      "x": 728,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#37c2d6",
+      "phone": "400-800-2015",
+      "hours": "10:00 - 22:00",
+      "desc": "周大福（一层 · 珠宝腕表），欢迎光临。",
+      "tags": [
+        "珠宝腕表",
+        "一层"
+      ]
+    },
+    {
+      "id": "S17",
+      "name": "老凤祥",
+      "floorId": "F2",
+      "cat": "jewelry",
+      "letter": "L",
+      "x": 815,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#37c2d6",
+      "phone": "400-800-2016",
+      "hours": "10:00 - 22:00",
+      "desc": "老凤祥（一层 · 珠宝腕表），欢迎光临。",
+      "tags": [
+        "珠宝腕表",
+        "一层"
+      ]
+    },
+    {
+      "id": "S18",
+      "name": "六福珠宝",
+      "floorId": "F2",
+      "cat": "jewelry",
+      "letter": "L",
+      "x": 815,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#37c2d6",
+      "phone": "400-800-2017",
+      "hours": "10:00 - 22:00",
+      "desc": "六福珠宝（一层 · 珠宝腕表），欢迎光临。",
+      "tags": [
+        "珠宝腕表",
+        "一层"
+      ]
+    },
+    {
+      "id": "S19",
+      "name": "COACH 蔻驰",
+      "floorId": "F2",
+      "cat": "fashion_women",
+      "letter": "C",
+      "x": 53,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#e8699a",
+      "phone": "400-800-2018",
+      "hours": "10:00 - 22:00",
+      "desc": "COACH 蔻驰（一层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "一层"
+      ]
+    },
+    {
+      "id": "S20",
+      "name": "MICHAEL KORS",
+      "floorId": "F2",
+      "cat": "fashion_women",
+      "letter": "M",
+      "x": 278,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#e8699a",
+      "phone": "400-800-2019",
+      "hours": "10:00 - 22:00",
+      "desc": "MICHAEL KORS（一层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "一层"
+      ]
+    },
+    {
+      "id": "S21",
+      "name": "星巴克臻选",
+      "floorId": "F2",
+      "cat": "drink",
+      "letter": "X",
+      "x": 503,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#9c7b6b",
+      "phone": "400-800-2020",
+      "hours": "10:00 - 22:00",
+      "desc": "星巴克臻选（一层 · 茶饮咖啡），欢迎光临。",
+      "tags": [
+        "茶饮咖啡",
+        "一层"
+      ]
+    },
+    {
+      "id": "S22",
+      "name": "喜茶",
+      "floorId": "F2",
+      "cat": "drink",
+      "letter": "X",
+      "x": 728,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#9c7b6b",
+      "phone": "400-800-2021",
+      "hours": "10:00 - 22:00",
+      "desc": "喜茶（一层 · 茶饮咖啡），欢迎光临。",
+      "tags": [
+        "茶饮咖啡",
+        "一层"
+      ]
+    },
+    {
+      "id": "S23",
+      "name": "皇冠蛋糕",
+      "floorId": "F2",
+      "cat": "dessert",
+      "letter": "H",
+      "x": 50,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#e8a33d",
+      "phone": "400-800-2022",
+      "hours": "10:00 - 22:00",
+      "desc": "皇冠蛋糕（一层 · 烘焙甜品），欢迎光临。",
+      "tags": [
+        "烘焙甜品",
+        "一层"
+      ]
+    },
+    {
+      "id": "S24",
+      "name": "屈臣氏",
+      "floorId": "F2",
+      "cat": "beauty",
+      "letter": "Q",
+      "x": 50,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#ec407a",
+      "phone": "400-800-2023",
+      "hours": "10:00 - 22:00",
+      "desc": "屈臣氏（一层 · 美容个护），欢迎光临。",
+      "tags": [
+        "美容个护",
+        "一层"
+      ]
+    },
+    {
+      "id": "S25",
+      "name": "ONLY",
+      "floorId": "F3",
+      "cat": "fashion_women",
+      "letter": "O",
+      "x": 53,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#e8699a",
+      "phone": "400-800-2024",
+      "hours": "10:00 - 22:00",
+      "desc": "ONLY（二层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "二层"
+      ]
+    },
+    {
+      "id": "S26",
+      "name": "VERO MODA",
+      "floorId": "F3",
+      "cat": "fashion_women",
+      "letter": "V",
+      "x": 278,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#e8699a",
+      "phone": "400-800-2025",
+      "hours": "10:00 - 22:00",
+      "desc": "VERO MODA（二层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "二层"
+      ]
+    },
+    {
+      "id": "S27",
+      "name": "太平鸟女装",
+      "floorId": "F3",
+      "cat": "fashion_women",
+      "letter": "T",
+      "x": 503,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#e8699a",
+      "phone": "400-800-2026",
+      "hours": "10:00 - 22:00",
+      "desc": "太平鸟女装（二层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "二层"
+      ]
+    },
+    {
+      "id": "S28",
+      "name": "欧时力",
+      "floorId": "F3",
+      "cat": "fashion_women",
+      "letter": "O",
+      "x": 728,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#e8699a",
+      "phone": "400-800-2027",
+      "hours": "10:00 - 22:00",
+      "desc": "欧时力（二层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "二层"
+      ]
+    },
+    {
+      "id": "S29",
+      "name": "歌莉娅",
+      "floorId": "F3",
+      "cat": "fashion_women",
+      "letter": "G",
+      "x": 815,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#e8699a",
+      "phone": "400-800-2028",
+      "hours": "10:00 - 22:00",
+      "desc": "歌莉娅（二层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "二层"
+      ]
+    },
+    {
+      "id": "S30",
+      "name": "江南布衣",
+      "floorId": "F3",
+      "cat": "fashion_women",
+      "letter": "J",
+      "x": 815,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#e8699a",
+      "phone": "400-800-2029",
+      "hours": "10:00 - 22:00",
+      "desc": "江南布衣（二层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "二层"
+      ]
+    },
+    {
+      "id": "S31",
+      "name": "百丽",
+      "floorId": "F3",
+      "cat": "shoes",
+      "letter": "B",
+      "x": 53,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#b06ad6",
+      "phone": "400-800-2030",
+      "hours": "10:00 - 22:00",
+      "desc": "百丽（二层 · 鞋包），欢迎光临。",
+      "tags": [
+        "鞋包",
+        "二层"
+      ]
+    },
+    {
+      "id": "S32",
+      "name": "达芙妮",
+      "floorId": "F3",
+      "cat": "shoes",
+      "letter": "D",
+      "x": 278,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#b06ad6",
+      "phone": "400-800-2031",
+      "hours": "10:00 - 22:00",
+      "desc": "达芙妮（二层 · 鞋包），欢迎光临。",
+      "tags": [
+        "鞋包",
+        "二层"
+      ]
+    },
+    {
+      "id": "S33",
+      "name": "星期六",
+      "floorId": "F3",
+      "cat": "shoes",
+      "letter": "X",
+      "x": 503,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#b06ad6",
+      "phone": "400-800-2032",
+      "hours": "10:00 - 22:00",
+      "desc": "星期六（二层 · 鞋包），欢迎光临。",
+      "tags": [
+        "鞋包",
+        "二层"
+      ]
+    },
+    {
+      "id": "S34",
+      "name": "他她",
+      "floorId": "F3",
+      "cat": "shoes",
+      "letter": "T",
+      "x": 728,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#b06ad6",
+      "phone": "400-800-2033",
+      "hours": "10:00 - 22:00",
+      "desc": "他她（二层 · 鞋包），欢迎光临。",
+      "tags": [
+        "鞋包",
+        "二层"
+      ]
+    },
+    {
+      "id": "S35",
+      "name": "都市丽人",
+      "floorId": "F3",
+      "cat": "fashion_women",
+      "letter": "D",
+      "x": 50,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#e8699a",
+      "phone": "400-800-2034",
+      "hours": "10:00 - 22:00",
+      "desc": "都市丽人（二层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "二层"
+      ]
+    },
+    {
+      "id": "S36",
+      "name": "蕉内",
+      "floorId": "F3",
+      "cat": "fashion_women",
+      "letter": "J",
+      "x": 50,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#e8699a",
+      "phone": "400-800-2035",
+      "hours": "10:00 - 22:00",
+      "desc": "蕉内（二层 · 女装），欢迎光临。",
+      "tags": [
+        "女装",
+        "二层"
+      ]
+    },
+    {
+      "id": "S37",
+      "name": "Jack&Jones",
+      "floorId": "F4",
+      "cat": "fashion_men",
+      "letter": "J",
+      "x": 53,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#4a7fe0",
+      "phone": "400-800-2036",
+      "hours": "10:00 - 22:00",
+      "desc": "Jack&Jones（三层 · 男装），欢迎光临。",
+      "tags": [
+        "男装",
+        "三层"
+      ]
+    },
+    {
+      "id": "S38",
+      "name": "海澜之家",
+      "floorId": "F4",
+      "cat": "fashion_men",
+      "letter": "H",
+      "x": 278,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#4a7fe0",
+      "phone": "400-800-2037",
+      "hours": "10:00 - 22:00",
+      "desc": "海澜之家（三层 · 男装），欢迎光临。",
+      "tags": [
+        "男装",
+        "三层"
+      ]
+    },
+    {
+      "id": "S39",
+      "name": "太平鸟男装",
+      "floorId": "F4",
+      "cat": "fashion_men",
+      "letter": "T",
+      "x": 503,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#4a7fe0",
+      "phone": "400-800-2038",
+      "hours": "10:00 - 22:00",
+      "desc": "太平鸟男装（三层 · 男装），欢迎光临。",
+      "tags": [
+        "男装",
+        "三层"
+      ]
+    },
+    {
+      "id": "S40",
+      "name": "优衣库",
+      "floorId": "F4",
+      "cat": "fashion_men",
+      "letter": "Y",
+      "x": 728,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#4a7fe0",
+      "phone": "400-800-2039",
+      "hours": "10:00 - 22:00",
+      "desc": "优衣库（三层 · 男装），欢迎光临。",
+      "tags": [
+        "男装",
+        "三层"
+      ]
+    },
+    {
+      "id": "S41",
+      "name": "NIKE 耐克",
+      "floorId": "F4",
+      "cat": "sports",
+      "letter": "N",
+      "x": 815,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#3aa76d",
+      "phone": "400-800-2040",
+      "hours": "10:00 - 22:00",
+      "desc": "NIKE 耐克（三层 · 运动户外），欢迎光临。",
+      "tags": [
+        "运动户外",
+        "三层"
+      ]
+    },
+    {
+      "id": "S42",
+      "name": "ADIDAS 阿迪达斯",
+      "floorId": "F4",
+      "cat": "sports",
+      "letter": "A",
+      "x": 815,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#3aa76d",
+      "phone": "400-800-2041",
+      "hours": "10:00 - 22:00",
+      "desc": "ADIDAS 阿迪达斯（三层 · 运动户外），欢迎光临。",
+      "tags": [
+        "运动户外",
+        "三层"
+      ]
+    },
+    {
+      "id": "S43",
+      "name": "安踏",
+      "floorId": "F4",
+      "cat": "sports",
+      "letter": "A",
+      "x": 53,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#3aa76d",
+      "phone": "400-800-2042",
+      "hours": "10:00 - 22:00",
+      "desc": "安踏（三层 · 运动户外），欢迎光临。",
+      "tags": [
+        "运动户外",
+        "三层"
+      ]
+    },
+    {
+      "id": "S44",
+      "name": "乐高 LEGO",
+      "floorId": "F4",
+      "cat": "kids",
+      "letter": "L",
+      "x": 278,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#f5a623",
+      "phone": "400-800-2043",
+      "hours": "10:00 - 22:00",
+      "desc": "乐高 LEGO（三层 · 儿童亲子），欢迎光临。",
+      "tags": [
+        "儿童亲子",
+        "三层"
+      ]
+    },
+    {
+      "id": "S45",
+      "name": "巴拉巴拉",
+      "floorId": "F4",
+      "cat": "kids",
+      "letter": "B",
+      "x": 503,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#f5a623",
+      "phone": "400-800-2044",
+      "hours": "10:00 - 22:00",
+      "desc": "巴拉巴拉（三层 · 儿童亲子），欢迎光临。",
+      "tags": [
+        "儿童亲子",
+        "三层"
+      ]
+    },
+    {
+      "id": "S46",
+      "name": "华为体验店",
+      "floorId": "F4",
+      "cat": "digital",
+      "letter": "H",
+      "x": 728,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#5b6ce0",
+      "phone": "400-800-2045",
+      "hours": "10:00 - 22:00",
+      "desc": "华为体验店（三层 · 数码家电），欢迎光临。",
+      "tags": [
+        "数码家电",
+        "三层"
+      ]
+    },
+    {
+      "id": "S47",
+      "name": "苹果授权店",
+      "floorId": "F4",
+      "cat": "digital",
+      "letter": "P",
+      "x": 50,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#5b6ce0",
+      "phone": "400-800-2046",
+      "hours": "10:00 - 22:00",
+      "desc": "苹果授权店（三层 · 数码家电），欢迎光临。",
+      "tags": [
+        "数码家电",
+        "三层"
+      ]
+    },
+    {
+      "id": "S48",
+      "name": "大疆体验店",
+      "floorId": "F4",
+      "cat": "digital",
+      "letter": "D",
+      "x": 50,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#5b6ce0",
+      "phone": "400-800-2047",
+      "hours": "10:00 - 22:00",
+      "desc": "大疆体验店（三层 · 数码家电），欢迎光临。",
+      "tags": [
+        "数码家电",
+        "三层"
+      ]
+    },
+    {
+      "id": "S49",
+      "name": "海底捞火锅",
+      "floorId": "F5",
+      "cat": "food",
+      "letter": "H",
+      "x": 53,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#ef6c4d",
+      "phone": "400-800-2048",
+      "hours": "10:00 - 22:00",
+      "desc": "海底捞火锅（四层 · 餐饮美食），欢迎光临。",
+      "tags": [
+        "餐饮美食",
+        "四层"
+      ]
+    },
+    {
+      "id": "S50",
+      "name": "西贝莜面村",
+      "floorId": "F5",
+      "cat": "food",
+      "letter": "X",
+      "x": 278,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#ef6c4d",
+      "phone": "400-800-2049",
+      "hours": "10:00 - 22:00",
+      "desc": "西贝莜面村（四层 · 餐饮美食），欢迎光临。",
+      "tags": [
+        "餐饮美食",
+        "四层"
+      ]
+    },
+    {
+      "id": "S51",
+      "name": "外婆家",
+      "floorId": "F5",
+      "cat": "food",
+      "letter": "W",
+      "x": 503,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#ef6c4d",
+      "phone": "400-800-2050",
+      "hours": "10:00 - 22:00",
+      "desc": "外婆家（四层 · 餐饮美食），欢迎光临。",
+      "tags": [
+        "餐饮美食",
+        "四层"
+      ]
+    },
+    {
+      "id": "S52",
+      "name": "必胜客",
+      "floorId": "F5",
+      "cat": "food",
+      "letter": "B",
+      "x": 728,
+      "y": 50,
+      "w": 219,
+      "h": 135,
+      "face": "bottom",
+      "color": "#ef6c4d",
+      "phone": "400-800-2051",
+      "hours": "10:00 - 22:00",
+      "desc": "必胜客（四层 · 餐饮美食），欢迎光临。",
+      "tags": [
+        "餐饮美食",
+        "四层"
+      ]
+    },
+    {
+      "id": "S53",
+      "name": "麦当劳",
+      "floorId": "F5",
+      "cat": "food",
+      "letter": "M",
+      "x": 815,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#ef6c4d",
+      "phone": "400-800-2052",
+      "hours": "10:00 - 22:00",
+      "desc": "麦当劳（四层 · 餐饮美食），欢迎光临。",
+      "tags": [
+        "餐饮美食",
+        "四层"
+      ]
+    },
+    {
+      "id": "S54",
+      "name": "云海肴",
+      "floorId": "F5",
+      "cat": "food",
+      "letter": "Y",
+      "x": 815,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "left",
+      "color": "#ef6c4d",
+      "phone": "400-800-2053",
+      "hours": "10:00 - 22:00",
+      "desc": "云海肴（四层 · 餐饮美食），欢迎光临。",
+      "tags": [
+        "餐饮美食",
+        "四层"
+      ]
+    },
+    {
+      "id": "S55",
+      "name": "太二酸菜鱼",
+      "floorId": "F5",
+      "cat": "food",
+      "letter": "T",
+      "x": 53,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#ef6c4d",
+      "phone": "400-800-2054",
+      "hours": "10:00 - 22:00",
+      "desc": "太二酸菜鱼（四层 · 餐饮美食），欢迎光临。",
+      "tags": [
+        "餐饮美食",
+        "四层"
+      ]
+    },
+    {
+      "id": "S56",
+      "name": "万达影城",
+      "floorId": "F5",
+      "cat": "entertainment",
+      "letter": "W",
+      "x": 278,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#7e57c2",
+      "phone": "400-800-2055",
+      "hours": "10:00 - 22:00",
+      "desc": "万达影城（四层 · 休闲娱乐），欢迎光临。",
+      "tags": [
+        "休闲娱乐",
+        "四层"
+      ]
+    },
+    {
+      "id": "S57",
+      "name": "大玩家",
+      "floorId": "F5",
+      "cat": "entertainment",
+      "letter": "D",
+      "x": 503,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#7e57c2",
+      "phone": "400-800-2056",
+      "hours": "10:00 - 22:00",
+      "desc": "大玩家（四层 · 休闲娱乐），欢迎光临。",
+      "tags": [
+        "休闲娱乐",
+        "四层"
+      ]
+    },
+    {
+      "id": "S58",
+      "name": "威尔士健身",
+      "floorId": "F5",
+      "cat": "sports",
+      "letter": "W",
+      "x": 728,
+      "y": 515,
+      "w": 219,
+      "h": 135,
+      "face": "top",
+      "color": "#3aa76d",
+      "phone": "400-800-2057",
+      "hours": "10:00 - 22:00",
+      "desc": "威尔士健身（四层 · 运动户外），欢迎光临。",
+      "tags": [
+        "运动户外",
+        "四层"
+      ]
+    },
+    {
+      "id": "S59",
+      "name": "星巴克",
+      "floorId": "F5",
+      "cat": "drink",
+      "letter": "X",
+      "x": 50,
+      "y": 188,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#9c7b6b",
+      "phone": "400-800-2058",
+      "hours": "10:00 - 22:00",
+      "desc": "星巴克（四层 · 茶饮咖啡），欢迎光临。",
+      "tags": [
+        "茶饮咖啡",
+        "四层"
+      ]
+    },
+    {
+      "id": "S60",
+      "name": "喜茶",
+      "floorId": "F5",
+      "cat": "drink",
+      "letter": "X",
+      "x": 50,
+      "y": 353,
+      "w": 135,
+      "h": 159,
+      "face": "right",
+      "color": "#9c7b6b",
+      "phone": "400-800-2059",
+      "hours": "10:00 - 22:00",
+      "desc": "喜茶（四层 · 茶饮咖啡），欢迎光临。",
+      "tags": [
+        "茶饮咖啡",
+        "四层"
+      ]
+    }
+  ],
+  "facilities": [
+    {
+      "id": "FA1",
+      "type": "elevator",
+      "name": "观光电梯",
+      "floorId": "F1",
+      "x": 300,
+      "y": 350
+    },
+    {
+      "id": "FA2",
+      "type": "escalator",
+      "name": "自动扶梯",
+      "floorId": "F1",
+      "x": 700,
+      "y": 350
+    },
+    {
+      "id": "FA3",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F1",
+      "x": 335,
+      "y": 215
+    },
+    {
+      "id": "FA4",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F1",
+      "x": 665,
+      "y": 485
+    },
+    {
+      "id": "FA5",
+      "type": "parking",
+      "name": "地下停车场",
+      "floorId": "F1",
+      "x": 500,
+      "y": 545
+    },
+    {
+      "id": "FA6",
+      "type": "elevator",
+      "name": "观光电梯",
+      "floorId": "F2",
+      "x": 300,
+      "y": 350
+    },
+    {
+      "id": "FA7",
+      "type": "escalator",
+      "name": "自动扶梯",
+      "floorId": "F2",
+      "x": 700,
+      "y": 350
+    },
+    {
+      "id": "FA8",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F2",
+      "x": 335,
+      "y": 215
+    },
+    {
+      "id": "FA9",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F2",
+      "x": 665,
+      "y": 485
+    },
+    {
+      "id": "FA10",
+      "type": "service",
+      "name": "客服中心",
+      "floorId": "F2",
+      "x": 430,
+      "y": 215
+    },
+    {
+      "id": "FA11",
+      "type": "atm",
+      "name": "ATM 取款机",
+      "floorId": "F2",
+      "x": 620,
+      "y": 215
+    },
+    {
+      "id": "FA12",
+      "type": "info",
+      "name": "导视屏（您的位置）",
+      "floorId": "F2",
+      "x": 500,
+      "y": 545
+    },
+    {
+      "id": "FA13",
+      "type": "elevator",
+      "name": "观光电梯",
+      "floorId": "F3",
+      "x": 300,
+      "y": 350
+    },
+    {
+      "id": "FA14",
+      "type": "escalator",
+      "name": "自动扶梯",
+      "floorId": "F3",
+      "x": 700,
+      "y": 350
+    },
+    {
+      "id": "FA15",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F3",
+      "x": 335,
+      "y": 215
+    },
+    {
+      "id": "FA16",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F3",
+      "x": 665,
+      "y": 485
+    },
+    {
+      "id": "FA17",
+      "type": "elevator",
+      "name": "观光电梯",
+      "floorId": "F4",
+      "x": 300,
+      "y": 350
+    },
+    {
+      "id": "FA18",
+      "type": "escalator",
+      "name": "自动扶梯",
+      "floorId": "F4",
+      "x": 700,
+      "y": 350
+    },
+    {
+      "id": "FA19",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F4",
+      "x": 335,
+      "y": 215
+    },
+    {
+      "id": "FA20",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F4",
+      "x": 665,
+      "y": 485
+    },
+    {
+      "id": "FA21",
+      "type": "nursing",
+      "name": "母婴室",
+      "floorId": "F4",
+      "x": 500,
+      "y": 215
+    },
+    {
+      "id": "FA22",
+      "type": "elevator",
+      "name": "观光电梯",
+      "floorId": "F5",
+      "x": 300,
+      "y": 350
+    },
+    {
+      "id": "FA23",
+      "type": "escalator",
+      "name": "自动扶梯",
+      "floorId": "F5",
+      "x": 700,
+      "y": 350
+    },
+    {
+      "id": "FA24",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F5",
+      "x": 335,
+      "y": 215
+    },
+    {
+      "id": "FA25",
+      "type": "restroom",
+      "name": "洗手间",
+      "floorId": "F5",
+      "x": 665,
+      "y": 485
+    }
+  ],
+  "promos": [
+    {
+      "id": "PR1",
+      "title": "秋日焕新季 · 全场服饰 5 折起",
+      "cat": "品牌特惠",
+      "startDate": "2026-09-15",
+      "endDate": "2026-10-15",
+      "floorId": "F3",
+      "color": "#e8699a",
+      "desc": "2F 时尚女装专区秋冬新品上市，全场 5 折起，会员再享 9 折。"
+    },
+    {
+      "id": "PR2",
+      "title": "珠宝腕表节 · 满 3000 减 500",
+      "cat": "品牌特惠",
+      "startDate": "2026-09-01",
+      "endDate": "2026-09-30",
+      "floorId": "F2",
+      "color": "#37c2d6",
+      "desc": "1F 珠宝腕表专区满 3000 减 500，以旧换新额外补贴。"
+    },
+    {
+      "id": "PR3",
+      "title": "环球美食 · 第二份半价",
+      "cat": "餐饮折扣",
+      "startDate": "2026-09-10",
+      "endDate": "2026-09-28",
+      "floorId": "F5",
+      "color": "#ef6c4d",
+      "desc": "4F 环球美食指定餐厅第二份半价，工作日 11:00-14:00。"
+    },
+    {
+      "id": "PR4",
+      "title": "会员专享 · 积分翻倍",
+      "cat": "会员专享",
+      "startDate": "2026-09-20",
+      "endDate": "2026-09-25",
+      "floorId": "",
+      "color": "#7e57c2",
+      "desc": "会员日当天全场消费积分翻倍，可兑换停车券与礼品。"
+    },
+    {
+      "id": "PR5",
+      "title": "国庆黄金周 · 中庭整点抽奖",
+      "cat": "节日活动",
+      "startDate": "2026-10-01",
+      "endDate": "2026-10-07",
+      "floorId": "",
+      "color": "#f5a623",
+      "desc": "国庆期间中庭整点抽奖，消费满 500 即可参与。"
+    },
+    {
+      "id": "PR6",
+      "title": "亲子乐园 · 儿童体验课免费抢",
+      "cat": "节日活动",
+      "startDate": "2026-09-18",
+      "endDate": "2026-10-08",
+      "floorId": "F4",
+      "color": "#3aa76d",
+      "desc": "3F 儿童区周末免费体验课，乐高 / 巴拉巴拉联名活动。"
+    }
+  ],
+  "banners": [
+    {
+      "id": "BN1",
+      "title": "星光汇购物中心",
+      "sub": "一站式购物 · 餐饮 · 娱乐中心",
+      "bg": "linear-gradient(135deg,#4a7fe0 0%,#7e57c2 100%)",
+      "badge": "欢迎光临",
+      "action": "floor"
+    },
+    {
+      "id": "BN2",
+      "title": "秋日焕新季",
+      "sub": "全场服饰 5 折起 · 会员再享折扣",
+      "bg": "linear-gradient(135deg,#e8699a 0%,#ef6c4d 100%)",
+      "badge": "限时特惠",
+      "action": "promo"
+    },
+    {
+      "id": "BN3",
+      "title": "四层环球美食",
+      "sub": "第二份半价 · 工作日午市专享",
+      "bg": "linear-gradient(135deg,#f5a623 0%,#ef6c4d 100%)",
+      "badge": "美食优选",
+      "action": "promo"
+    },
+    {
+      "id": "BN4",
+      "title": "停车缴费 · 手机一键搞定",
+      "sub": "扫码缴费 或 至客服中心办理",
+      "bg": "linear-gradient(135deg,#26a69a 0%,#37c2d6 100%)",
+      "badge": "便捷服务",
+      "action": "service"
+    }
+  ],
+  "graph": {
+    "nodes": [
+      {
+        "id": "N1",
+        "x": 340,
+        "y": 240,
+        "floorId": "F1"
+      },
+      {
+        "id": "N2",
+        "x": 500,
+        "y": 240,
+        "floorId": "F1"
+      },
+      {
+        "id": "N3",
+        "x": 660,
+        "y": 240,
+        "floorId": "F1"
+      },
+      {
+        "id": "N4",
+        "x": 700,
+        "y": 350,
+        "floorId": "F1",
+        "facilityId": "FA2"
+      },
+      {
+        "id": "N5",
+        "x": 660,
+        "y": 460,
+        "floorId": "F1"
+      },
+      {
+        "id": "N6",
+        "x": 500,
+        "y": 460,
+        "floorId": "F1"
+      },
+      {
+        "id": "N7",
+        "x": 340,
+        "y": 460,
+        "floorId": "F1"
+      },
+      {
+        "id": "N8",
+        "x": 300,
+        "y": 350,
+        "floorId": "F1",
+        "facilityId": "FA1"
+      },
+      {
+        "id": "N9",
+        "x": 335,
+        "y": 215,
+        "floorId": "F1",
+        "facilityId": "FA3"
+      },
+      {
+        "id": "N10",
+        "x": 665,
+        "y": 485,
+        "floorId": "F1",
+        "facilityId": "FA4"
+      },
+      {
+        "id": "N11",
+        "x": 500,
+        "y": 545,
+        "floorId": "F1",
+        "facilityId": "FA5"
+      },
+      {
+        "id": "N12",
+        "x": 163,
+        "y": 215,
+        "floorId": "F1",
+        "shopId": "S1"
+      },
+      {
+        "id": "N13",
+        "x": 388,
+        "y": 215,
+        "floorId": "F1",
+        "shopId": "S2"
+      },
+      {
+        "id": "N14",
+        "x": 613,
+        "y": 215,
+        "floorId": "F1",
+        "shopId": "S3"
+      },
+      {
+        "id": "N15",
+        "x": 838,
+        "y": 215,
+        "floorId": "F1",
+        "shopId": "S4"
+      },
+      {
+        "id": "N16",
+        "x": 785,
+        "y": 268,
+        "floorId": "F1",
+        "shopId": "S5"
+      },
+      {
+        "id": "N17",
+        "x": 785,
+        "y": 433,
+        "floorId": "F1",
+        "shopId": "S6"
+      },
+      {
+        "id": "N18",
+        "x": 163,
+        "y": 485,
+        "floorId": "F1",
+        "shopId": "S7"
+      },
+      {
+        "id": "N19",
+        "x": 388,
+        "y": 485,
+        "floorId": "F1",
+        "shopId": "S8"
+      },
+      {
+        "id": "N20",
+        "x": 613,
+        "y": 485,
+        "floorId": "F1",
+        "shopId": "S9"
+      },
+      {
+        "id": "N21",
+        "x": 838,
+        "y": 485,
+        "floorId": "F1",
+        "shopId": "S10"
+      },
+      {
+        "id": "N22",
+        "x": 215,
+        "y": 268,
+        "floorId": "F1",
+        "shopId": "S11"
+      },
+      {
+        "id": "N23",
+        "x": 215,
+        "y": 433,
+        "floorId": "F1",
+        "shopId": "S12"
+      },
+      {
+        "id": "N24",
+        "x": 340,
+        "y": 240,
+        "floorId": "F2"
+      },
+      {
+        "id": "N25",
+        "x": 500,
+        "y": 240,
+        "floorId": "F2"
+      },
+      {
+        "id": "N26",
+        "x": 660,
+        "y": 240,
+        "floorId": "F2"
+      },
+      {
+        "id": "N27",
+        "x": 700,
+        "y": 350,
+        "floorId": "F2",
+        "facilityId": "FA7"
+      },
+      {
+        "id": "N28",
+        "x": 660,
+        "y": 460,
+        "floorId": "F2"
+      },
+      {
+        "id": "N29",
+        "x": 500,
+        "y": 460,
+        "floorId": "F2"
+      },
+      {
+        "id": "N30",
+        "x": 340,
+        "y": 460,
+        "floorId": "F2"
+      },
+      {
+        "id": "N31",
+        "x": 300,
+        "y": 350,
+        "floorId": "F2",
+        "facilityId": "FA6"
+      },
+      {
+        "id": "N32",
+        "x": 335,
+        "y": 215,
+        "floorId": "F2",
+        "facilityId": "FA8"
+      },
+      {
+        "id": "N33",
+        "x": 665,
+        "y": 485,
+        "floorId": "F2",
+        "facilityId": "FA9"
+      },
+      {
+        "id": "N34",
+        "x": 430,
+        "y": 215,
+        "floorId": "F2",
+        "facilityId": "FA10"
+      },
+      {
+        "id": "N35",
+        "x": 620,
+        "y": 215,
+        "floorId": "F2",
+        "facilityId": "FA11"
+      },
+      {
+        "id": "N36",
+        "x": 500,
+        "y": 545,
+        "floorId": "F2",
+        "facilityId": "FA12"
+      },
+      {
+        "id": "N37",
+        "x": 163,
+        "y": 215,
+        "floorId": "F2",
+        "shopId": "S13"
+      },
+      {
+        "id": "N38",
+        "x": 388,
+        "y": 215,
+        "floorId": "F2",
+        "shopId": "S14"
+      },
+      {
+        "id": "N39",
+        "x": 613,
+        "y": 215,
+        "floorId": "F2",
+        "shopId": "S15"
+      },
+      {
+        "id": "N40",
+        "x": 838,
+        "y": 215,
+        "floorId": "F2",
+        "shopId": "S16"
+      },
+      {
+        "id": "N41",
+        "x": 785,
+        "y": 268,
+        "floorId": "F2",
+        "shopId": "S17"
+      },
+      {
+        "id": "N42",
+        "x": 785,
+        "y": 433,
+        "floorId": "F2",
+        "shopId": "S18"
+      },
+      {
+        "id": "N43",
+        "x": 163,
+        "y": 485,
+        "floorId": "F2",
+        "shopId": "S19"
+      },
+      {
+        "id": "N44",
+        "x": 388,
+        "y": 485,
+        "floorId": "F2",
+        "shopId": "S20"
+      },
+      {
+        "id": "N45",
+        "x": 613,
+        "y": 485,
+        "floorId": "F2",
+        "shopId": "S21"
+      },
+      {
+        "id": "N46",
+        "x": 838,
+        "y": 485,
+        "floorId": "F2",
+        "shopId": "S22"
+      },
+      {
+        "id": "N47",
+        "x": 215,
+        "y": 268,
+        "floorId": "F2",
+        "shopId": "S23"
+      },
+      {
+        "id": "N48",
+        "x": 215,
+        "y": 433,
+        "floorId": "F2",
+        "shopId": "S24"
+      },
+      {
+        "id": "N49",
+        "x": 340,
+        "y": 240,
+        "floorId": "F3"
+      },
+      {
+        "id": "N50",
+        "x": 500,
+        "y": 240,
+        "floorId": "F3"
+      },
+      {
+        "id": "N51",
+        "x": 660,
+        "y": 240,
+        "floorId": "F3"
+      },
+      {
+        "id": "N52",
+        "x": 700,
+        "y": 350,
+        "floorId": "F3",
+        "facilityId": "FA14"
+      },
+      {
+        "id": "N53",
+        "x": 660,
+        "y": 460,
+        "floorId": "F3"
+      },
+      {
+        "id": "N54",
+        "x": 500,
+        "y": 460,
+        "floorId": "F3"
+      },
+      {
+        "id": "N55",
+        "x": 340,
+        "y": 460,
+        "floorId": "F3"
+      },
+      {
+        "id": "N56",
+        "x": 300,
+        "y": 350,
+        "floorId": "F3",
+        "facilityId": "FA13"
+      },
+      {
+        "id": "N57",
+        "x": 335,
+        "y": 215,
+        "floorId": "F3",
+        "facilityId": "FA15"
+      },
+      {
+        "id": "N58",
+        "x": 665,
+        "y": 485,
+        "floorId": "F3",
+        "facilityId": "FA16"
+      },
+      {
+        "id": "N59",
+        "x": 163,
+        "y": 215,
+        "floorId": "F3",
+        "shopId": "S25"
+      },
+      {
+        "id": "N60",
+        "x": 388,
+        "y": 215,
+        "floorId": "F3",
+        "shopId": "S26"
+      },
+      {
+        "id": "N61",
+        "x": 613,
+        "y": 215,
+        "floorId": "F3",
+        "shopId": "S27"
+      },
+      {
+        "id": "N62",
+        "x": 838,
+        "y": 215,
+        "floorId": "F3",
+        "shopId": "S28"
+      },
+      {
+        "id": "N63",
+        "x": 785,
+        "y": 268,
+        "floorId": "F3",
+        "shopId": "S29"
+      },
+      {
+        "id": "N64",
+        "x": 785,
+        "y": 433,
+        "floorId": "F3",
+        "shopId": "S30"
+      },
+      {
+        "id": "N65",
+        "x": 163,
+        "y": 485,
+        "floorId": "F3",
+        "shopId": "S31"
+      },
+      {
+        "id": "N66",
+        "x": 388,
+        "y": 485,
+        "floorId": "F3",
+        "shopId": "S32"
+      },
+      {
+        "id": "N67",
+        "x": 613,
+        "y": 485,
+        "floorId": "F3",
+        "shopId": "S33"
+      },
+      {
+        "id": "N68",
+        "x": 838,
+        "y": 485,
+        "floorId": "F3",
+        "shopId": "S34"
+      },
+      {
+        "id": "N69",
+        "x": 215,
+        "y": 268,
+        "floorId": "F3",
+        "shopId": "S35"
+      },
+      {
+        "id": "N70",
+        "x": 215,
+        "y": 433,
+        "floorId": "F3",
+        "shopId": "S36"
+      },
+      {
+        "id": "N71",
+        "x": 340,
+        "y": 240,
+        "floorId": "F4"
+      },
+      {
+        "id": "N72",
+        "x": 500,
+        "y": 240,
+        "floorId": "F4"
+      },
+      {
+        "id": "N73",
+        "x": 660,
+        "y": 240,
+        "floorId": "F4"
+      },
+      {
+        "id": "N74",
+        "x": 700,
+        "y": 350,
+        "floorId": "F4",
+        "facilityId": "FA18"
+      },
+      {
+        "id": "N75",
+        "x": 660,
+        "y": 460,
+        "floorId": "F4"
+      },
+      {
+        "id": "N76",
+        "x": 500,
+        "y": 460,
+        "floorId": "F4"
+      },
+      {
+        "id": "N77",
+        "x": 340,
+        "y": 460,
+        "floorId": "F4"
+      },
+      {
+        "id": "N78",
+        "x": 300,
+        "y": 350,
+        "floorId": "F4",
+        "facilityId": "FA17"
+      },
+      {
+        "id": "N79",
+        "x": 335,
+        "y": 215,
+        "floorId": "F4",
+        "facilityId": "FA19"
+      },
+      {
+        "id": "N80",
+        "x": 665,
+        "y": 485,
+        "floorId": "F4",
+        "facilityId": "FA20"
+      },
+      {
+        "id": "N81",
+        "x": 500,
+        "y": 215,
+        "floorId": "F4",
+        "facilityId": "FA21"
+      },
+      {
+        "id": "N82",
+        "x": 163,
+        "y": 215,
+        "floorId": "F4",
+        "shopId": "S37"
+      },
+      {
+        "id": "N83",
+        "x": 388,
+        "y": 215,
+        "floorId": "F4",
+        "shopId": "S38"
+      },
+      {
+        "id": "N84",
+        "x": 613,
+        "y": 215,
+        "floorId": "F4",
+        "shopId": "S39"
+      },
+      {
+        "id": "N85",
+        "x": 838,
+        "y": 215,
+        "floorId": "F4",
+        "shopId": "S40"
+      },
+      {
+        "id": "N86",
+        "x": 785,
+        "y": 268,
+        "floorId": "F4",
+        "shopId": "S41"
+      },
+      {
+        "id": "N87",
+        "x": 785,
+        "y": 433,
+        "floorId": "F4",
+        "shopId": "S42"
+      },
+      {
+        "id": "N88",
+        "x": 163,
+        "y": 485,
+        "floorId": "F4",
+        "shopId": "S43"
+      },
+      {
+        "id": "N89",
+        "x": 388,
+        "y": 485,
+        "floorId": "F4",
+        "shopId": "S44"
+      },
+      {
+        "id": "N90",
+        "x": 613,
+        "y": 485,
+        "floorId": "F4",
+        "shopId": "S45"
+      },
+      {
+        "id": "N91",
+        "x": 838,
+        "y": 485,
+        "floorId": "F4",
+        "shopId": "S46"
+      },
+      {
+        "id": "N92",
+        "x": 215,
+        "y": 268,
+        "floorId": "F4",
+        "shopId": "S47"
+      },
+      {
+        "id": "N93",
+        "x": 215,
+        "y": 433,
+        "floorId": "F4",
+        "shopId": "S48"
+      },
+      {
+        "id": "N94",
+        "x": 340,
+        "y": 240,
+        "floorId": "F5"
+      },
+      {
+        "id": "N95",
+        "x": 500,
+        "y": 240,
+        "floorId": "F5"
+      },
+      {
+        "id": "N96",
+        "x": 660,
+        "y": 240,
+        "floorId": "F5"
+      },
+      {
+        "id": "N97",
+        "x": 700,
+        "y": 350,
+        "floorId": "F5",
+        "facilityId": "FA23"
+      },
+      {
+        "id": "N98",
+        "x": 660,
+        "y": 460,
+        "floorId": "F5"
+      },
+      {
+        "id": "N99",
+        "x": 500,
+        "y": 460,
+        "floorId": "F5"
+      },
+      {
+        "id": "N100",
+        "x": 340,
+        "y": 460,
+        "floorId": "F5"
+      },
+      {
+        "id": "N101",
+        "x": 300,
+        "y": 350,
+        "floorId": "F5",
+        "facilityId": "FA22"
+      },
+      {
+        "id": "N102",
+        "x": 335,
+        "y": 215,
+        "floorId": "F5",
+        "facilityId": "FA24"
+      },
+      {
+        "id": "N103",
+        "x": 665,
+        "y": 485,
+        "floorId": "F5",
+        "facilityId": "FA25"
+      },
+      {
+        "id": "N104",
+        "x": 163,
+        "y": 215,
+        "floorId": "F5",
+        "shopId": "S49"
+      },
+      {
+        "id": "N105",
+        "x": 388,
+        "y": 215,
+        "floorId": "F5",
+        "shopId": "S50"
+      },
+      {
+        "id": "N106",
+        "x": 613,
+        "y": 215,
+        "floorId": "F5",
+        "shopId": "S51"
+      },
+      {
+        "id": "N107",
+        "x": 838,
+        "y": 215,
+        "floorId": "F5",
+        "shopId": "S52"
+      },
+      {
+        "id": "N108",
+        "x": 785,
+        "y": 268,
+        "floorId": "F5",
+        "shopId": "S53"
+      },
+      {
+        "id": "N109",
+        "x": 785,
+        "y": 433,
+        "floorId": "F5",
+        "shopId": "S54"
+      },
+      {
+        "id": "N110",
+        "x": 163,
+        "y": 485,
+        "floorId": "F5",
+        "shopId": "S55"
+      },
+      {
+        "id": "N111",
+        "x": 388,
+        "y": 485,
+        "floorId": "F5",
+        "shopId": "S56"
+      },
+      {
+        "id": "N112",
+        "x": 613,
+        "y": 485,
+        "floorId": "F5",
+        "shopId": "S57"
+      },
+      {
+        "id": "N113",
+        "x": 838,
+        "y": 485,
+        "floorId": "F5",
+        "shopId": "S58"
+      },
+      {
+        "id": "N114",
+        "x": 215,
+        "y": 268,
+        "floorId": "F5",
+        "shopId": "S59"
+      },
+      {
+        "id": "N115",
+        "x": 215,
+        "y": 433,
+        "floorId": "F5",
+        "shopId": "S60"
+      }
+    ],
+    "edges": [
+      {
+        "id": "E1",
+        "from": "N1",
+        "to": "N2",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E2",
+        "from": "N2",
+        "to": "N3",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E3",
+        "from": "N3",
+        "to": "N4",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E4",
+        "from": "N4",
+        "to": "N5",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E5",
+        "from": "N5",
+        "to": "N6",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E6",
+        "from": "N6",
+        "to": "N7",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E7",
+        "from": "N7",
+        "to": "N8",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E8",
+        "from": "N8",
+        "to": "N1",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E9",
+        "from": "N9",
+        "to": "N1",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E10",
+        "from": "N10",
+        "to": "N5",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E11",
+        "from": "N11",
+        "to": "N6",
+        "type": "walk",
+        "weight": 85
+      },
+      {
+        "id": "E12",
+        "from": "N12",
+        "to": "N1",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E13",
+        "from": "N13",
+        "to": "N1",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E14",
+        "from": "N14",
+        "to": "N3",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E15",
+        "from": "N15",
+        "to": "N3",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E16",
+        "from": "N16",
+        "to": "N4",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E17",
+        "from": "N17",
+        "to": "N4",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E18",
+        "from": "N18",
+        "to": "N7",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E19",
+        "from": "N19",
+        "to": "N7",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E20",
+        "from": "N20",
+        "to": "N5",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E21",
+        "from": "N21",
+        "to": "N5",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E22",
+        "from": "N22",
+        "to": "N8",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E23",
+        "from": "N23",
+        "to": "N8",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E24",
+        "from": "N24",
+        "to": "N25",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E25",
+        "from": "N25",
+        "to": "N26",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E26",
+        "from": "N26",
+        "to": "N27",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E27",
+        "from": "N27",
+        "to": "N28",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E28",
+        "from": "N28",
+        "to": "N29",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E29",
+        "from": "N29",
+        "to": "N30",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E30",
+        "from": "N30",
+        "to": "N31",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E31",
+        "from": "N31",
+        "to": "N24",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E32",
+        "from": "N32",
+        "to": "N24",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E33",
+        "from": "N33",
+        "to": "N28",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E34",
+        "from": "N34",
+        "to": "N25",
+        "type": "walk",
+        "weight": 74
+      },
+      {
+        "id": "E35",
+        "from": "N35",
+        "to": "N26",
+        "type": "walk",
+        "weight": 47
+      },
+      {
+        "id": "E36",
+        "from": "N36",
+        "to": "N29",
+        "type": "walk",
+        "weight": 85
+      },
+      {
+        "id": "E37",
+        "from": "N37",
+        "to": "N24",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E38",
+        "from": "N38",
+        "to": "N24",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E39",
+        "from": "N39",
+        "to": "N26",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E40",
+        "from": "N40",
+        "to": "N26",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E41",
+        "from": "N41",
+        "to": "N27",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E42",
+        "from": "N42",
+        "to": "N27",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E43",
+        "from": "N43",
+        "to": "N30",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E44",
+        "from": "N44",
+        "to": "N30",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E45",
+        "from": "N45",
+        "to": "N28",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E46",
+        "from": "N46",
+        "to": "N28",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E47",
+        "from": "N47",
+        "to": "N31",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E48",
+        "from": "N48",
+        "to": "N31",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E49",
+        "from": "N49",
+        "to": "N50",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E50",
+        "from": "N50",
+        "to": "N51",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E51",
+        "from": "N51",
+        "to": "N52",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E52",
+        "from": "N52",
+        "to": "N53",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E53",
+        "from": "N53",
+        "to": "N54",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E54",
+        "from": "N54",
+        "to": "N55",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E55",
+        "from": "N55",
+        "to": "N56",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E56",
+        "from": "N56",
+        "to": "N49",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E57",
+        "from": "N57",
+        "to": "N49",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E58",
+        "from": "N58",
+        "to": "N53",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E59",
+        "from": "N59",
+        "to": "N49",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E60",
+        "from": "N60",
+        "to": "N49",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E61",
+        "from": "N61",
+        "to": "N51",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E62",
+        "from": "N62",
+        "to": "N51",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E63",
+        "from": "N63",
+        "to": "N52",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E64",
+        "from": "N64",
+        "to": "N52",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E65",
+        "from": "N65",
+        "to": "N55",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E66",
+        "from": "N66",
+        "to": "N55",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E67",
+        "from": "N67",
+        "to": "N53",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E68",
+        "from": "N68",
+        "to": "N53",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E69",
+        "from": "N69",
+        "to": "N56",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E70",
+        "from": "N70",
+        "to": "N56",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E71",
+        "from": "N71",
+        "to": "N72",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E72",
+        "from": "N72",
+        "to": "N73",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E73",
+        "from": "N73",
+        "to": "N74",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E74",
+        "from": "N74",
+        "to": "N75",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E75",
+        "from": "N75",
+        "to": "N76",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E76",
+        "from": "N76",
+        "to": "N77",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E77",
+        "from": "N77",
+        "to": "N78",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E78",
+        "from": "N78",
+        "to": "N71",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E79",
+        "from": "N79",
+        "to": "N71",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E80",
+        "from": "N80",
+        "to": "N75",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E81",
+        "from": "N81",
+        "to": "N72",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E82",
+        "from": "N82",
+        "to": "N71",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E83",
+        "from": "N83",
+        "to": "N71",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E84",
+        "from": "N84",
+        "to": "N73",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E85",
+        "from": "N85",
+        "to": "N73",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E86",
+        "from": "N86",
+        "to": "N74",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E87",
+        "from": "N87",
+        "to": "N74",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E88",
+        "from": "N88",
+        "to": "N77",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E89",
+        "from": "N89",
+        "to": "N77",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E90",
+        "from": "N90",
+        "to": "N75",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E91",
+        "from": "N91",
+        "to": "N75",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E92",
+        "from": "N92",
+        "to": "N78",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E93",
+        "from": "N93",
+        "to": "N78",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E94",
+        "from": "N94",
+        "to": "N95",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E95",
+        "from": "N95",
+        "to": "N96",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E96",
+        "from": "N96",
+        "to": "N97",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E97",
+        "from": "N97",
+        "to": "N98",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E98",
+        "from": "N98",
+        "to": "N99",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E99",
+        "from": "N99",
+        "to": "N100",
+        "type": "walk",
+        "weight": 160
+      },
+      {
+        "id": "E100",
+        "from": "N100",
+        "to": "N101",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E101",
+        "from": "N101",
+        "to": "N94",
+        "type": "walk",
+        "weight": 117
+      },
+      {
+        "id": "E102",
+        "from": "N102",
+        "to": "N94",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E103",
+        "from": "N103",
+        "to": "N98",
+        "type": "walk",
+        "weight": 25
+      },
+      {
+        "id": "E104",
+        "from": "N104",
+        "to": "N94",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E105",
+        "from": "N105",
+        "to": "N94",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E106",
+        "from": "N106",
+        "to": "N96",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E107",
+        "from": "N107",
+        "to": "N96",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E108",
+        "from": "N108",
+        "to": "N97",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E109",
+        "from": "N109",
+        "to": "N97",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E110",
+        "from": "N110",
+        "to": "N100",
+        "type": "walk",
+        "weight": 179
+      },
+      {
+        "id": "E111",
+        "from": "N111",
+        "to": "N100",
+        "type": "walk",
+        "weight": 54
+      },
+      {
+        "id": "E112",
+        "from": "N112",
+        "to": "N98",
+        "type": "walk",
+        "weight": 53
+      },
+      {
+        "id": "E113",
+        "from": "N113",
+        "to": "N98",
+        "type": "walk",
+        "weight": 180
+      },
+      {
+        "id": "E114",
+        "from": "N114",
+        "to": "N101",
+        "type": "walk",
+        "weight": 118
+      },
+      {
+        "id": "E115",
+        "from": "N115",
+        "to": "N101",
+        "type": "walk",
+        "weight": 119
+      },
+      {
+        "id": "E116",
+        "from": "N8",
+        "to": "N31",
+        "type": "floor",
+        "weight": 0
+      },
+      {
+        "id": "E117",
+        "from": "N4",
+        "to": "N27",
+        "type": "floor",
+        "weight": 0
+      },
+      {
+        "id": "E118",
+        "from": "N31",
+        "to": "N56",
+        "type": "floor",
+        "weight": 0
+      },
+      {
+        "id": "E119",
+        "from": "N27",
+        "to": "N52",
+        "type": "floor",
+        "weight": 0
+      },
+      {
+        "id": "E120",
+        "from": "N56",
+        "to": "N78",
+        "type": "floor",
+        "weight": 0
+      },
+      {
+        "id": "E121",
+        "from": "N52",
+        "to": "N74",
+        "type": "floor",
+        "weight": 0
+      },
+      {
+        "id": "E122",
+        "from": "N78",
+        "to": "N101",
+        "type": "floor",
+        "weight": 0
+      },
+      {
+        "id": "E123",
+        "from": "N74",
+        "to": "N97",
+        "type": "floor",
+        "weight": 0
+      }
+    ]
+  }
+}

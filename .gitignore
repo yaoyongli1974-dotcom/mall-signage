@@ -1,0 +1,15 @@
+# 运行时用户数据（不含入仓库，首次运行自动从示例种子生成）
+data/db.json
+data/db.backup-*.json
+
+# 上传素材（运行期生成/上传，可由 tools/gen-seed.js 重建示例）
+public/uploads/*
+!public/uploads/.gitkeep
+
+# 依赖与日志
+node_modules/
+*.log
+
+# 系统文件
+.DS_Store
+Thumbs.db
