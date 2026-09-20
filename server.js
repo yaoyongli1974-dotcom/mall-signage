@@ -15,6 +15,10 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+
+// 用户口令哈希（平台/商场账号通用）
+function hashPass(pw, salt) { return crypto.createHash('sha256').update(salt + '::' + String(pw)).digest('hex'); }
 
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
@@ -264,9 +268,9 @@ function normScreens(arr, floors) {
 // 未登记屏幕回落到的「默认界面」：全模块开放、从首页进入
 function defaultScreenProfile() {
   return {
-    id: '', name: db.settings.mallName || '默认界面', location: '', enabled: true, assigned: false,
+    id: '', name: M.settings.mallName || '默认界面', location: '', enabled: true, assigned: false,
     defaultTab: 'home',
-    focusFloorId: (db.floors[0] || {}).id || '',
+    focusFloorId: (M.floors[0] || {}).id || '',
     modules: SCREEN_MODULES.reduce((m, k) => (m[k] = true, m), {}),
     accent: '', notice: '', rev: 0
   };
@@ -274,46 +278,134 @@ function defaultScreenProfile() {
 // 屏端按自身标识解析专属展示参数（全局基础 + 每屏覆盖）
 function resolveScreenProfile(id) {
   const nid = normScreenId(id);
-  const s = db.screens.find((x) => x.id === nid && x.enabled !== false);
+  const s = M.screens.find((x) => x.id === nid && x.enabled !== false);
   if (!s) return Object.assign(defaultScreenProfile(), { id: nid });
   return {
     id: s.id, name: s.name, location: s.location, enabled: s.enabled, assigned: true,
     defaultTab: s.defaultTab,
-    focusFloorId: s.focusFloorId || (db.floors[0] || {}).id || '',
+    focusFloorId: s.focusFloorId || (M.floors[0] || {}).id || '',
     modules: Object.assign({}, s.modules),
     accent: s.accent, notice: s.notice, rev: s.rev
   };
 }
 
-// ---------- 数据加载 ----------
+// ---------- 数据加载（v2：多商场多租户） ----------
 let db = loadDb();
 
-// 老库首次升级：补齐默认「待机页」配置并落盘一次（不触碰其它字段）
-if (MIGRATED) { try { saveDb(); console.log('[迁移] 已写入默认「待机页」/「服务指南」配置'); } catch (e) { /* ignore */ } }
+// 当前商场上下文：所有 M.* 数据都指向它；每个请求按「?mall= / x-mall-id / 会话归属」解析
+let M = null, MID = '';
+function mallById(id) { return db.malls.find((x) => x.id === id) || null; }
+function firstActiveMall() { return db.malls.find((x) => x.status !== 'disabled') || db.malls[0] || null; }
+function setMall(id) {
+  const mm = id ? mallById(id) : null;
+  const target = mm || firstActiveMall();
+  M = target ? target.data : { settings: {}, floors: [], shops: [], facilities: [], promos: [], banners: [], graph: { nodes: [], edges: [] }, screens: [] };
+  MID = target ? target.id : '';
+  return target;
+}
+
+// 老库首次升级：落盘一次（不触碰其它字段）
+if (MIGRATED) { try { saveDb(); console.log('[迁移] 数据结构已升级并落盘'); } catch (e) { /* ignore */ } }
+setMall(process.env.MALL || '');
+
+// 单个商场数据归一化（原 normalizeDb 主体，作用于商场级 data）
+function normalizeMallData(d) {
+  d = d || {};
+  d.floors = d.floors || [];
+  d.shops = d.shops || [];
+  d.facilities = d.facilities || [];
+  d.promos = d.promos || [];
+  d.banners = d.banners || [];
+  d.graph = d.graph || { nodes: [], edges: [] };
+  d.graph.nodes = d.graph.nodes || [];
+  d.graph.edges = d.graph.edges || [];
+  d.settings = d.settings || {};
+  // 店铺 Logo 与活动/Banner 素材（新增字段，旧数据自动兜底）
+  d.shops.forEach((s) => { if (typeof s.logo !== 'string') s.logo = ''; });
+  d.promos.forEach((p) => { p.media = normMedia(p.media); });
+  d.banners.forEach((b) => { b.media = normMedia(b.media); });
+  // 待机页（屏保）配置：缺失则补齐默认值（老库无损迁移）
+  d.settings.screensaver = normScreen(d.settings.screensaver, d.settings.screensaverSeconds);
+  // 服务指南配置：缺失则补齐默认卡片（老库无损迁移）
+  d.settings.guide = normGuide(d.settings.guide);
+  // 多屏分发屏幕登记表：缺失则播种示例屏（老库无损迁移）
+  d.screens = normScreens(d.screens, d.floors);
+  if (!d.settings.scalePxPerM) d.settings.scalePxPerM = 10;
+  if (!d.settings.idleSeconds) d.settings.idleSeconds = 90;
+  if (!d.settings.screensaverSeconds) d.settings.screensaverSeconds = 45;
+  return d;
+}
+
+// 用户账号（平台 + 商场）：加盐哈希；迁移时用旧 adminPass 播种平台管理员
+function normUsers(arr, seedPass) {
+  if (!Array.isArray(arr)) { MIGRATED = true; arr = []; }
+  const out = []; const seen = new Set();
+  arr.forEach((x) => {
+    if (!x || typeof x !== 'object') return;
+    const id = (typeof x.id === 'string' && x.id) ? x.id : uid('U');
+    const username = (typeof x.username === 'string') ? x.username.trim().slice(0, 30) : '';
+    if (!username || seen.has(username)) return;
+    seen.add(username);
+    out.push({
+      id, username,
+      salt: (typeof x.salt === 'string') ? x.salt : '',
+      passHash: (typeof x.passHash === 'string') ? x.passHash : '',
+      role: x.role === 'platform' ? 'platform' : 'mall',
+      mallId: (typeof x.mallId === 'string') ? x.mallId : '',
+      perms: Array.isArray(x.perms) ? x.perms : [],
+      enabled: x.enabled !== false,
+      createdAt: x.createdAt || new Date().toISOString(),
+      lastLoginAt: x.lastLoginAt || ''
+    });
+  });
+  if (!out.length) {
+    // 迁移播种：平台管理员 admin / 旧 adminPass
+    MIGRATED = true;
+    const salt = crypto.randomBytes(8).toString('hex');
+    out.push({ id: uid('U'), username: 'admin', salt, passHash: hashPass(seedPass || 'admin123', salt), role: 'platform', mallId: '', perms: [], enabled: true, createdAt: new Date().toISOString(), lastLoginAt: '' });
+  }
+  return out;
+}
 
 function normalizeDb(parsed) {
-  parsed.floors = parsed.floors || [];
-  parsed.shops = parsed.shops || [];
-  parsed.facilities = parsed.facilities || [];
-  parsed.promos = parsed.promos || [];
-  parsed.banners = parsed.banners || [];
-  parsed.graph = parsed.graph || { nodes: [], edges: [] };
-  parsed.graph.nodes = parsed.graph.nodes || [];
-  parsed.graph.edges = parsed.graph.edges || [];
+  if (!Array.isArray(parsed.malls)) {
+    // ===== v1（单商场）→ v2（多商场）自动迁移：旧库整体成为第一个商场 =====
+    const mallData = {
+      settings: parsed.settings || {}, floors: parsed.floors || [], shops: parsed.shops || [],
+      facilities: parsed.facilities || [], promos: parsed.promos || [], banners: parsed.banners || [],
+      graph: parsed.graph || { nodes: [], edges: [] }, screens: parsed.screens || []
+    };
+    parsed.malls = [{
+      id: 'M1',
+      name: (parsed.settings && parsed.settings.mallName) || '默认商场',
+      status: 'active',
+      note: '由单商场版本自动迁移',
+      createdAt: new Date().toISOString(),
+      data: mallData
+    }];
+    parsed.settings = { adminPass: (parsed.settings && parsed.settings.adminPass) || 'admin123' }; // 全局仅保留平台引导密码
+    MIGRATED = true;
+  }
+  // 商场注册表归一化
+  const seen = new Set();
+  parsed.malls = parsed.malls.filter((mm) => {
+    if (!mm || typeof mm !== 'object' || !mm.id || seen.has(mm.id)) return false;
+    seen.add(mm.id);
+    return true;
+  });
+  parsed.malls.forEach((mm) => {
+    mm.name = (typeof mm.name === 'string' && mm.name.trim()) ? mm.name.trim().slice(0, 40) : '商场 ' + mm.id;
+    mm.status = mm.status === 'disabled' ? 'disabled' : 'active';
+    mm.note = (typeof mm.note === 'string') ? mm.note.slice(0, 200) : '';
+    mm.createdAt = mm.createdAt || new Date().toISOString();
+    mm.data = normalizeMallData(mm.data);
+  });
+  if (!parsed.malls.length) { MIGRATED = true; parsed.malls = [{ id: 'M1', name: '默认商场', status: 'active', note: '', createdAt: new Date().toISOString(), data: normalizeMallData({}) }]; }
+  // 全局：平台引导密码 + 用户 + 会话
   parsed.settings = parsed.settings || {};
-  // 店铺 Logo 与活动/Banner 素材（新增字段，旧数据自动兜底）
-  parsed.shops.forEach((s) => { if (typeof s.logo !== 'string') s.logo = ''; });
-  parsed.promos.forEach((p) => { p.media = normMedia(p.media); });
-  parsed.banners.forEach((b) => { b.media = normMedia(b.media); });
-  // 待机页（屏保）配置：缺失则补齐默认值（老库无损迁移）
-  parsed.settings.screensaver = normScreen(parsed.settings.screensaver, parsed.settings.screensaverSeconds);
-  // 服务指南配置：缺失则补齐默认卡片（老库无损迁移）
-  parsed.settings.guide = normGuide(parsed.settings.guide);
-  // 多屏分发屏幕登记表：缺失则播种示例屏（老库无损迁移）
-  parsed.screens = normScreens(parsed.screens, parsed.floors);
-  if (!parsed.settings.scalePxPerM) parsed.settings.scalePxPerM = 10;
-  if (!parsed.settings.idleSeconds) parsed.settings.idleSeconds = 90;
-  if (!parsed.settings.screensaverSeconds) parsed.settings.screensaverSeconds = 45;
+  if (typeof parsed.settings.adminPass !== 'string' || !parsed.settings.adminPass) parsed.settings.adminPass = 'admin123';
+  parsed.users = normUsers(parsed.users, parsed.settings.adminPass);
+  parsed.sessions = (parsed.sessions && typeof parsed.sessions === 'object' && !Array.isArray(parsed.sessions)) ? parsed.sessions : {};
   return parsed;
 }
 
@@ -439,38 +531,38 @@ function facMeta(type) { return FACILITY_TYPES.find((f) => f.key === type) || FA
 const FLOOR_ID_RE = /^F\d+$/;
 function nextFloorId() {
   const used = new Set();
-  db.floors.forEach((f) => { const m = String(f.id || '').match(FLOOR_ID_RE); if (m) used.add(m[0]); });
+  M.floors.forEach((f) => { const m = String(f.id || '').match(FLOOR_ID_RE); if (m) used.add(m[0]); });
   let i = 1; while (used.has('F' + i)) i++;
   return 'F' + i;
 }
 const NODE_ID_RE = /^N\d+$/;
 function nextNodeId() {
-  const used = new Set(db.graph.nodes.map((n) => String(n.id)));
+  const used = new Set(M.graph.nodes.map((n) => String(n.id)));
   let i = 1; while (used.has('N' + i)) i++;
   return 'N' + i;
 }
 function compactFloorIds() {
   const cnt = {};
-  db.floors.forEach((f) => (cnt[f.id] = (cnt[f.id] || 0) + 1));
+  M.floors.forEach((f) => (cnt[f.id] = (cnt[f.id] || 0) + 1));
   const dups = Object.keys(cnt).filter((k) => cnt[k] > 1);
   if (dups.length) {
-    const seen = new Set(); const taken = new Set(db.floors.map((f) => f.id)); let t = 0;
-    db.floors.forEach((f) => {
+    const seen = new Set(); const taken = new Set(M.floors.map((f) => f.id)); let t = 0;
+    M.floors.forEach((f) => {
       if (!dups.includes(f.id)) return;
       if (!seen.has(f.id)) { seen.add(f.id); return; }
       let tmp; do { t++; tmp = 'Ftmp' + t; } while (taken.has(tmp));
       taken.add(tmp); f.id = tmp;
     });
   }
-  const ordered = [...db.floors].sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
-  const needReorder = db.floors.some((f, i) => f !== ordered[i]);
+  const ordered = [...M.floors].sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
+  const needReorder = M.floors.some((f, i) => f !== ordered[i]);
   const map = {}; let needRename = false;
   ordered.forEach((f, i) => { const want = 'F' + (i + 1); if (f.id !== want) { map[f.id] = want; needRename = true; } });
   if (!needReorder && !needRename) return false;
   ordered.forEach((f, i) => (f.id = 'F' + (i + 1)));
-  db.floors = ordered;
+  M.floors = ordered;
   ['shops', 'facilities'].forEach((k) => db[k].forEach((x) => { if (map[x.floorId]) x.floorId = map[x.floorId]; }));
-  db.graph.nodes.forEach((n) => { if (map[n.floorId]) n.floorId = map[n.floorId]; });
+  M.graph.nodes.forEach((n) => { if (map[n.floorId]) n.floorId = map[n.floorId]; });
   saveDb();
   return true;
 }
@@ -482,7 +574,7 @@ function ensureFloorPlan(f) {
   if (!['none', 'draw', 'image'].includes(p.mode)) p.mode = 'draw';
   if (typeof p.width !== 'number') p.width = 1000;
   if (typeof p.height !== 'number') p.height = 700;
-  if (typeof p.scalePxPerM !== 'number' || p.scalePxPerM <= 0) p.scalePxPerM = Number(db.settings.scalePxPerM) || 10;
+  if (typeof p.scalePxPerM !== 'number' || p.scalePxPerM <= 0) p.scalePxPerM = Number(M.settings.scalePxPerM) || 10;
   if (typeof p.originX !== 'number') p.originX = 0;
   if (typeof p.originY !== 'number') p.originY = 0;
   if (typeof p.image !== 'string') p.image = null;
@@ -496,24 +588,24 @@ function ensureFloorPlan(f) {
   return f;
 }
 function pxToMeters(px, plan) {
-  const s = (plan && plan.scalePxPerM) || Number(db.settings.scalePxPerM) || 10;
+  const s = (plan && plan.scalePxPerM) || Number(M.settings.scalePxPerM) || 10;
   const ox = (plan && plan.originX) || 0;
   return (px - ox) / s;
 }
 function floorsSorted() {
-  const ordered = [...db.floors].sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
+  const ordered = [...M.floors].sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
   ordered.forEach(ensureFloorPlan);
   return ordered;
 }
-function shopById(id) { return db.shops.find((s) => s.id === id); }
-function facById(id) { return db.facilities.find((f) => f.id === id); }
-function nodeById(id) { return db.graph.nodes.find((n) => n.id === id); }
-function floorById(id) { return db.floors.find((f) => f.id === id); }
+function shopById(id) { return M.shops.find((s) => s.id === id); }
+function facById(id) { return M.facilities.find((f) => f.id === id); }
+function nodeById(id) { return M.graph.nodes.find((n) => n.id === id); }
+function floorById(id) { return M.floors.find((f) => f.id === id); }
 function floorShort(fid) { const f = floorById(fid); return f ? (f.short || f.name) : fid; }
 
 // ---------- 节点命名：店铺 > 设施 > 通道 ----------
 function nodeName(n, opts) {
-  const list = (opts && opts.list) || db.graph.nodes;
+  const list = (opts && opts.list) || M.graph.nodes;
   if (n.shopId) { const s = shopById(n.shopId); if (s) return s.name; }
   if (n.facilityId) { const f = facById(n.facilityId); if (f) return f.name; }
   const base = floorShort(n.floorId);
@@ -547,15 +639,15 @@ function promoOut(p) {
 
 // ---------- 清理孤儿数据 ----------
 function pruneOrphanEdges() {
-  const ids = new Set(db.graph.nodes.map((n) => n.id));
-  const before = db.graph.edges.length;
-  db.graph.edges = db.graph.edges.filter((e) => ids.has(e.from) && ids.has(e.to));
-  return before - db.graph.edges.length;
+  const ids = new Set(M.graph.nodes.map((n) => n.id));
+  const before = M.graph.edges.length;
+  M.graph.edges = M.graph.edges.filter((e) => ids.has(e.from) && ids.has(e.to));
+  return before - M.graph.edges.length;
 }
 // 节点指向的店铺/设施若已被删除，清除失效引用（节点保留，避免破坏路网）
 function pruneNodeRefs() {
   let changed = 0;
-  db.graph.nodes.forEach((n) => {
+  M.graph.nodes.forEach((n) => {
     if (n.shopId && !shopById(n.shopId)) { delete n.shopId; changed++; }
     if (n.facilityId && !facById(n.facilityId)) { delete n.facilityId; changed++; }
   });
@@ -565,7 +657,7 @@ function pruneNodeRefs() {
 // ---------- 起点解析（含自愈降级） ----------
 const START_RE = /客服|服务台|导视|入口|大厅|中庭|大厅|service|info|entrance/i;
 function pickFallbackStartNode() {
-  const nodes = db.graph.nodes;
+  const nodes = M.graph.nodes;
   if (!nodes.length) return null;
   // ① 客服中心 / 导视屏类设施所在节点
   const atService = nodes.find((n) => {
@@ -575,25 +667,25 @@ function pickFallbackStartNode() {
   });
   if (atService) return atService;
   // ② 最低楼层的第一个节点
-  const ordered = [...db.floors].sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
+  const ordered = [...M.floors].sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
   for (const f of ordered) { const n = nodes.find((x) => x.floorId === f.id); if (n) return n; }
   return nodes[0];
 }
 function resolveStartNode() {
-  const cur = db.settings.startNode ? nodeById(db.settings.startNode) : null;
+  const cur = M.settings.startNode ? nodeById(M.settings.startNode) : null;
   if (cur) return { node: cur, healed: false };
   const fb = pickFallbackStartNode();
-  if (fb) { db.settings.startNode = fb.id; saveDb(); }
-  else if (db.settings.startNode) { db.settings.startNode = null; saveDb(); }
+  if (fb) { M.settings.startNode = fb.id; saveDb(); }
+  else if (M.settings.startNode) { M.settings.startNode = null; saveDb(); }
   return { node: fb, healed: true };
 }
 // 把「节点 / 店铺 / 设施 id」统一解析为节点 id
 function resolveNodeRef(ref) {
   if (!ref) return null;
   if (nodeById(ref)) return ref;
-  const sn = db.graph.nodes.find((n) => n.shopId === ref);
+  const sn = M.graph.nodes.find((n) => n.shopId === ref);
   if (sn) return sn.id;
-  const fn = db.graph.nodes.find((n) => n.facilityId === ref);
+  const fn = M.graph.nodes.find((n) => n.facilityId === ref);
   if (fn) return fn.id;
   return null;
 }
@@ -601,8 +693,8 @@ function resolveNodeRef(ref) {
 // ---------- 路网 ----------
 function buildAdj() {
   const adj = {};
-  db.graph.nodes.forEach((n) => (adj[n.id] = []));
-  db.graph.edges.forEach((e) => {
+  M.graph.nodes.forEach((n) => (adj[n.id] = []));
+  M.graph.edges.forEach((e) => {
     const a = nodeById(e.from), b = nodeById(e.to);
     if (!a || !b) return;
     const w = typeof e.weight === 'number' ? e.weight : dist(a, b);
@@ -614,7 +706,7 @@ function buildAdj() {
 function graphConnectivity() {
   const adj = buildAdj();
   const seen = new Set(); let components = 0;
-  db.graph.nodes.forEach((n) => {
+  M.graph.nodes.forEach((n) => {
     if (seen.has(n.id)) return;
     components++; const stack = [n.id]; seen.add(n.id);
     while (stack.length) {
@@ -622,8 +714,8 @@ function graphConnectivity() {
       (adj[cur] || []).forEach((e) => { if (!seen.has(e.to)) { seen.add(e.to); stack.push(e.to); } });
     }
   });
-  const isolated = db.graph.nodes.filter((n) => (adj[n.id] || []).length === 0).map((n) => n.id);
-  return { nodes: db.graph.nodes.length, edges: db.graph.edges.length, components, isolated };
+  const isolated = M.graph.nodes.filter((n) => (adj[n.id] || []).length === 0).map((n) => n.id);
+  return { nodes: M.graph.nodes.length, edges: M.graph.edges.length, components, isolated };
 }
 function autoConnectGraph(opts) {
   const o = opts || {};
@@ -632,7 +724,7 @@ function autoConnectGraph(opts) {
   const withCrossFloor = o.crossFloor !== false;
   const added = [];
   const keyOf = (a, b) => (a < b ? a + '|' + b : b + '|' + a);
-  const exists = new Set(db.graph.edges.map((e) => keyOf(String(e.from), String(e.to))));
+  const exists = new Set(M.graph.edges.map((e) => keyOf(String(e.from), String(e.to))));
   const add = (aId, bId, type) => {
     if (!aId || !bId || aId === bId) return false;
     const kk = keyOf(aId, bId);
@@ -640,12 +732,12 @@ function autoConnectGraph(opts) {
     const a = nodeById(aId), b = nodeById(bId);
     if (!a || !b) return false;
     exists.add(kk);
-    db.graph.edges.push({ id: uid('E'), from: aId, to: bId, type: type || 'walk', weight: Math.round(dist(a, b)) });
+    M.graph.edges.push({ id: uid('E'), from: aId, to: bId, type: type || 'walk', weight: Math.round(dist(a, b)) });
     added.push({ from: aId, to: bId, type: type || 'walk' });
     return true;
   };
   const byFloor = {};
-  db.graph.nodes.forEach((n) => { (byFloor[n.floorId] = byFloor[n.floorId] || []).push(n); });
+  M.graph.nodes.forEach((n) => { (byFloor[n.floorId] = byFloor[n.floorId] || []).push(n); });
   Object.values(byFloor).forEach((list) => {
     list.forEach((n) => {
       list.filter((m) => m.id !== n.id).sort((p, q) => dist(n, p) - dist(n, q)).slice(0, k)
@@ -662,7 +754,7 @@ function autoConnectGraph(opts) {
     }
   });
   if (withCrossFloor) {
-    const ordered = [...db.floors].sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
+    const ordered = [...M.floors].sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
     for (let i = 1; i < ordered.length; i++) {
       const A = byFloor[ordered[i - 1].id] || [], B = byFloor[ordered[i].id] || [];
       if (!A.length || !B.length) continue;
@@ -844,6 +936,41 @@ const server = http.createServer(async (req, res) => {
 
 async function handleApi(req, res, method, pathname, parsed) {
   const q = parsed.searchParams;
+  let m; // 路由匹配用（提前声明，避免 TDZ）
+  // 商场上下文：?mall= 或 x-mall-id 指定；缺省为第一个启用商场。
+  // 注意：登录鉴权后，商场用户会被强制重设为本商场（防越权），见下方 authGate。
+  setMall(q.get('mall') || req.headers['x-mall-id'] || '');
+
+  // ---- 会话鉴权（v2 多商场）----
+  function authContext() {
+    const t = req.headers['x-auth-token'] || '';
+    const s = t && db.sessions[t];
+    if (!s || s.exp < Date.now()) return null;
+    const u = db.users.find((x) => x.id === s.userId);
+    if (!u || u.enabled === false) return null;
+    return { user: u, role: u.role, mallId: u.role === 'platform' ? '' : u.mallId };
+  }
+  function createSession(u) {
+    const token = crypto.randomBytes(24).toString('hex');
+    db.sessions[token] = { userId: u.id, exp: Date.now() + 12 * 3600 * 1000 };
+    // 顺手清理过期会话
+    const now = Date.now();
+    Object.keys(db.sessions).forEach((k) => { if (db.sessions[k].exp < now) delete db.sessions[k]; });
+    saveDb();
+    return token;
+  }
+  function userOut(u) { const { id, username, role, mallId, perms, enabled, createdAt, lastLoginAt } = u; return { id, username, role, mallId, perms, enabled, createdAt, lastLoginAt }; }
+  function mallOut(mm) {
+    return {
+      id: mm.id, name: mm.name, status: mm.status, note: mm.note, createdAt: mm.createdAt,
+      counts: {
+        floors: mm.data.floors.length, shops: mm.data.shops.length, facilities: mm.data.facilities.length,
+        promos: mm.data.promos.length, banners: mm.data.banners.length,
+        screens: mm.data.screens.length, nodes: mm.data.graph.nodes.length
+      }
+    };
+  }
+  function canPerm(mod) { return auth && auth.role === 'platform' || (auth && auth.role === 'mall' && (!auth.user.perms || !auth.user.perms.length || auth.user.perms.includes(mod))); }
 
   // ===== 公开只读接口 =====
   if (method === 'GET' && pathname === '/api/floors') return sendJson(res, 200, { ok: true, data: floorsSorted() });
@@ -851,44 +978,45 @@ async function handleApi(req, res, method, pathname, parsed) {
   if (method === 'GET' && pathname === '/api/facility-types') return sendJson(res, 200, { ok: true, data: FACILITY_TYPES });
   if (method === 'GET' && pathname === '/api/shops') {
     const fid = q.get('floorId');
-    const list = fid ? db.shops.filter((s) => s.floorId === fid) : db.shops;
+    const list = fid ? M.shops.filter((s) => s.floorId === fid) : M.shops;
     return sendJson(res, 200, { ok: true, data: list.map(shopOut) });
   }
   if (method === 'GET' && pathname === '/api/facilities') {
     const fid = q.get('floorId');
-    const list = fid ? db.facilities.filter((f) => f.floorId === fid) : db.facilities;
+    const list = fid ? M.facilities.filter((f) => f.floorId === fid) : M.facilities;
     return sendJson(res, 200, { ok: true, data: list.map(facOut) });
   }
-  if (method === 'GET' && pathname === '/api/promos') return sendJson(res, 200, { ok: true, data: db.promos.map(promoOut) });
-  if (method === 'GET' && pathname === '/api/banners') return sendJson(res, 200, { ok: true, data: db.banners });
+  if (method === 'GET' && pathname === '/api/promos') return sendJson(res, 200, { ok: true, data: M.promos.map(promoOut) });
+  if (method === 'GET' && pathname === '/api/banners') return sendJson(res, 200, { ok: true, data: M.banners });
 
   // 全量数据（前台一次取）
   if (method === 'GET' && pathname === '/api/map') {
     const rs = resolveStartNode();
     return sendJson(res, 200, {
       ok: true,
+      mallId: MID,
       floors: floorsSorted(),
-      shops: db.shops.map(shopOut),
-      facilities: db.facilities.map(facOut),
-      promos: db.promos.map(promoOut),
-      banners: db.banners,
-      graph: { nodes: db.graph.nodes.map(nodeOut), edges: db.graph.edges },
+      shops: M.shops.map(shopOut),
+      facilities: M.facilities.map(facOut),
+      promos: M.promos.map(promoOut),
+      banners: M.banners,
+      graph: { nodes: M.graph.nodes.map(nodeOut), edges: M.graph.edges },
       categories: CATEGORIES,
       facilityTypes: FACILITY_TYPES,
       settings: {
-        mallName: db.settings.mallName || '商场智能导视系统',
-        slogan: db.settings.slogan || '',
-        address: db.settings.address || '',
-        servicePhone: db.settings.servicePhone || '',
-        businessHours: db.settings.businessHours || '',
+        mallName: M.settings.mallName || '商场智能导视系统',
+        slogan: M.settings.slogan || '',
+        address: M.settings.address || '',
+        servicePhone: M.settings.servicePhone || '',
+        businessHours: M.settings.businessHours || '',
         startNode: rs.node ? rs.node.id : null,
         startName: rs.node ? nodeName(rs.node) : '',
         startHealed: rs.healed,
-        scalePxPerM: Number(db.settings.scalePxPerM) || 10,
-        idleSeconds: Number(db.settings.idleSeconds) || 90,
-        screensaverSeconds: Number(db.settings.screensaverSeconds) || 45,
-        screensaver: db.settings.screensaver,
-        guide: db.settings.guide
+        scalePxPerM: Number(M.settings.scalePxPerM) || 10,
+        idleSeconds: Number(M.settings.idleSeconds) || 90,
+        screensaverSeconds: Number(M.settings.screensaverSeconds) || 45,
+        screensaver: M.settings.screensaver,
+        guide: M.settings.guide
       }
     });
   }
@@ -924,18 +1052,167 @@ async function handleApi(req, res, method, pathname, parsed) {
   // 屏幕端自助取配置（公开，无需鉴权）：按自身标识返回专属展示参数（轮询 rev 实现远程切换）
   const pubScreen = pathname.match(/^\/api\/screen\/([^/]+)$/);
   if (pubScreen && method === 'GET') {
-    return sendJson(res, 200, { ok: true, data: resolveScreenProfile(decodeURIComponent(pubScreen[1])) });
+    const prof = resolveScreenProfile(decodeURIComponent(pubScreen[1]));
+    prof.mallId = MID;
+    return sendJson(res, 200, { ok: true, data: prof });
   }
 
-  // 管理员登录
+  // 用户登录（v2：用户名 + 口令；平台账号 / 商场账号统一入口）
+  if (method === 'POST' && pathname === '/api/auth/login') {
+    const b = await readBody(req);
+    const username = String(b.username || '').trim().slice(0, 30);
+    const u = db.users.find((x) => x.username === username);
+    if (!u || u.passHash !== hashPass(String(b.password || ''), u.salt)) return sendJson(res, 401, { ok: false, error: '用户名或密码错误' });
+    if (u.enabled === false) return sendJson(res, 403, { ok: false, error: '账号已停用' });
+    if (u.role === 'mall') {
+      const mm = mallById(u.mallId);
+      if (!mm) return sendJson(res, 403, { ok: false, error: '账号所属商场不存在' });
+      if (mm.status === 'disabled') return sendJson(res, 403, { ok: false, error: '所属商场已被停用' });
+    }
+    u.lastLoginAt = new Date().toISOString();
+    const token = createSession(u);
+    return sendJson(res, 200, { ok: true, token, user: userOut(u) });
+  }
+  if (method === 'GET' && pathname === '/api/auth/me') {
+    const a = authContext();
+    if (!a) return sendJson(res, 401, { ok: false, error: '未登录或会话已过期' });
+    return sendJson(res, 200, { ok: true, user: userOut(a.user) });
+  }
+  if (method === 'POST' && pathname === '/api/auth/logout') {
+    const t = req.headers['x-auth-token'] || '';
+    if (t && db.sessions[t]) { delete db.sessions[t]; saveDb(); }
+    return sendJson(res, 200, { ok: true });
+  }
+  // 旧版管理员登录（兼容保留：平台引导密码 → 平台权限）
   if (method === 'POST' && pathname === '/api/login') {
     const body = await readBody(req);
-    if (body.pass === db.settings.adminPass) return sendJson(res, 200, { ok: true, token: db.settings.adminPass });
+    if (body.pass === db.settings.adminPass) return sendJson(res, 200, { ok: true, token: db.settings.adminPass, legacy: true });
     return sendJson(res, 401, { ok: false, error: '密码错误' });
   }
 
-  // ===== 以下为管理员接口 =====
-  if (!isAdmin(req)) return sendJson(res, 401, { ok: false, error: '未授权，请先登录' });
+  // ===== 以下为管理接口 =====
+  // 鉴权：会话账号（x-auth-token）或旧平台密码（x-admin-token，兼容保留）
+  const auth = authContext() || (isAdmin(req) ? { role: 'platform', mallId: '', user: null } : null);
+  if (!auth) return sendJson(res, 401, { ok: false, error: '未授权，请先登录' });
+  // 商场上下文与越权防护：商场用户强制锁定本商场（忽略任何 ?mall=/x-mall-id 提示）
+  if (auth.role !== 'platform') setMall(auth.mallId);
+
+  const MALL_PERMS = ['floors', 'shops', 'facilities', 'promos', 'banners', 'standby', 'guide', 'screens', 'map', 'graph', 'settings'];
+  // ---- 多商场：商场管理（仅平台） ----
+  if (pathname === '/api/malls') {
+    if (method === 'GET') {
+      if (auth.role !== 'platform') return sendJson(res, 200, { ok: true, data: db.malls.filter((x) => x.id === auth.mallId).map(mallOut) });
+      return sendJson(res, 200, { ok: true, data: db.malls.map(mallOut) });
+    }
+    if (method === 'POST') {
+      if (auth.role !== 'platform') return sendJson(res, 403, { ok: false, error: '仅平台账号可创建商场' });
+      const b = await readBody(req);
+      const name = String(b.name || '').trim();
+      if (!name) return sendJson(res, 400, { ok: false, error: '请填写商场名称' });
+      let id = normScreenId(b.id);
+      if (!id) id = 'M' + (db.malls.reduce((mx, x) => Math.max(mx, Number(String(x.id).replace(/\D/g, '')) || 0), 0) + 1);
+      if (mallById(id)) return sendJson(res, 400, { ok: false, error: '商场 ID 已存在：' + id });
+      const mm = { id, name: name.slice(0, 40), status: 'active', note: String(b.note || '').slice(0, 200), createdAt: new Date().toISOString(), data: normalizeMallData({ settings: { mallName: name } }) };
+      db.malls.push(mm);
+      saveDb();
+      return sendJson(res, 200, { ok: true, data: mallOut(mm) });
+    }
+  }
+  m = pathname.match(/^\/api\/malls\/([^/]+)$/);
+  if (m) {
+    if (auth.role !== 'platform') return sendJson(res, 403, { ok: false, error: '仅平台账号可管理商场注册表' });
+    const mm = mallById(m[1]);
+    if (method === 'GET') { if (!mm) return sendJson(res, 404, { ok: false, error: '商场不存在' }); return sendJson(res, 200, { ok: true, data: mallOut(mm) }); }
+    if (method === 'PUT') {
+      if (!mm) return sendJson(res, 404, { ok: false, error: '商场不存在' });
+      const b = await readBody(req);
+      if (b.name != null && String(b.name).trim()) { mm.name = String(b.name).trim().slice(0, 40); mm.data.settings.mallName = mm.data.settings.mallName || mm.name; }
+      if (b.note != null) mm.note = String(b.note).slice(0, 200);
+      if (b.status === 'active' || b.status === 'disabled') {
+        if (b.status === 'disabled' && mm.status !== 'disabled' && db.malls.filter((x) => x.status !== 'disabled').length <= 1) {
+          return sendJson(res, 400, { ok: false, error: '不能停用最后一个启用中的商场' });
+        }
+        mm.status = b.status;
+      }
+      saveDb();
+      return sendJson(res, 200, { ok: true, data: mallOut(mm) });
+    }
+    if (method === 'DELETE') {
+      if (!mm) return sendJson(res, 404, { ok: false, error: '商场不存在' });
+      if (db.malls.length <= 1) return sendJson(res, 400, { ok: false, error: '至少保留一个商场，不能删除' });
+      db.malls = db.malls.filter((x) => x.id !== mm.id);
+      db.users = db.users.filter((u) => !(u.role === 'mall' && u.mallId === mm.id));
+      Object.keys(db.sessions).forEach((t) => { const u = db.users.find((x) => x.id === db.sessions[t].userId); if (!u) delete db.sessions[t]; });
+      saveDb();
+      return sendJson(res, 200, { ok: true });
+    }
+  }
+
+  // ---- 多商场：用户账号与权限管理 ----
+  if (pathname === '/api/users') {
+    if (method === 'GET') {
+      let list = db.users.map(userOut);
+      if (auth.role !== 'platform') list = list.filter((u) => u.role === 'mall' && u.mallId === auth.mallId);
+      return sendJson(res, 200, { ok: true, data: list });
+    }
+    if (method === 'POST') {
+      const b = await readBody(req);
+      const username = String(b.username || '').trim().slice(0, 30);
+      if (!/^\w[\w.-]{1,29}$/.test(username)) return sendJson(res, 400, { ok: false, error: '用户名需为 2-30 位字母/数字/._- 且以字母数字开头' });
+      if (db.users.some((u) => u.username === username)) return sendJson(res, 400, { ok: false, error: '用户名已存在：' + username });
+      if (!b.password || String(b.password).length < 6) return sendJson(res, 400, { ok: false, error: '密码至少 6 位' });
+      let role = 'mall', mallId = auth.mallId;
+      if (auth.role === 'platform') {
+        role = b.role === 'platform' ? 'platform' : 'mall';
+        mallId = role === 'mall' ? String(b.mallId || '') : '';
+        if (role === 'mall' && !mallById(mallId)) return sendJson(res, 400, { ok: false, error: '请为商场账号选择所属商场' });
+      }
+      const perms = Array.isArray(b.perms) ? b.perms.filter((p) => MALL_PERMS.includes(p)) : [];
+      const salt = crypto.randomBytes(8).toString('hex');
+      const u = { id: uid('U'), username, salt, passHash: hashPass(String(b.password), salt), role, mallId, perms, enabled: b.enabled !== false, createdAt: new Date().toISOString(), lastLoginAt: '' };
+      db.users.push(u);
+      saveDb();
+      return sendJson(res, 200, { ok: true, data: userOut(u) });
+    }
+  }
+  m = pathname.match(/^\/api\/users\/([^/]+)$/);
+  if (m) {
+    const target = db.users.find((x) => x.id === m[1]);
+    if (method === 'PUT') {
+      if (!target) return sendJson(res, 404, { ok: false, error: '用户不存在' });
+      if (auth.role !== 'platform' && (target.role !== 'mall' || target.mallId !== auth.mallId)) return sendJson(res, 403, { ok: false, error: '无权修改其他商场的账号' });
+      const b = await readBody(req);
+      if (b.newPassword != null) {
+        if (String(b.newPassword).length < 6) return sendJson(res, 400, { ok: false, error: '密码至少 6 位' });
+        target.salt = crypto.randomBytes(8).toString('hex');
+        target.passHash = hashPass(String(b.newPassword), target.salt);
+      }
+      if (b.perms != null) { if (target.role !== 'mall') return sendJson(res, 400, { ok: false, error: '平台账号不使用模块权限' }); target.perms = Array.isArray(b.perms) ? b.perms.filter((p) => MALL_PERMS.includes(p)) : []; }
+      if (b.enabled != null) { if (target.id === (auth.user || {}).id) return sendJson(res, 400, { ok: false, error: '不能停用自己的账号' }); target.enabled = !!b.enabled; }
+      saveDb();
+      return sendJson(res, 200, { ok: true, data: userOut(target) });
+    }
+    if (method === 'DELETE') {
+      if (!target) return sendJson(res, 404, { ok: false, error: '用户不存在' });
+      if (target.id === (auth.user || {}).id) return sendJson(res, 400, { ok: false, error: '不能删除自己的账号' });
+      if (auth.role !== 'platform' && (target.role !== 'mall' || target.mallId !== auth.mallId)) return sendJson(res, 403, { ok: false, error: '无权删除其他商场的账号' });
+      db.users = db.users.filter((x) => x.id !== target.id);
+      Object.keys(db.sessions).forEach((t) => { if (db.sessions[t].userId === target.id) delete db.sessions[t]; });
+      saveDb();
+      return sendJson(res, 200, { ok: true });
+    }
+  }
+  // 修改自己的密码（平台/商场账号通用）
+  if (pathname === '/api/auth/password' && method === 'PUT') {
+    if (!auth.user) return sendJson(res, 400, { ok: false, error: '旧密码通道不支持该操作，请在用户管理中重置' });
+    const b = await readBody(req);
+    if (!auth.user.passHash || auth.user.passHash !== hashPass(String(b.oldPassword || ''), auth.user.salt)) return sendJson(res, 400, { ok: false, error: '旧密码错误' });
+    if (!b.newPassword || String(b.newPassword).length < 6) return sendJson(res, 400, { ok: false, error: '新密码至少 6 位' });
+    auth.user.salt = crypto.randomBytes(8).toString('hex');
+    auth.user.passHash = hashPass(String(b.newPassword), auth.user.salt);
+    saveDb();
+    return sendJson(res, 200, { ok: true });
+  }
 
   if (method === 'GET' && pathname === '/api/graph/connectivity') return sendJson(res, 200, { ok: true, data: graphConnectivity() });
   if (method === 'POST' && pathname === '/api/graph/autoconnect') {
@@ -948,37 +1225,35 @@ async function handleApi(req, res, method, pathname, parsed) {
     if (method === 'GET') {
       const rs = resolveStartNode();
       return sendJson(res, 200, { ok: true, data: {
-        startNode: db.settings.startNode || null, startName: rs.node ? nodeName(rs.node) : '',
-        startValid: !!rs.node, mallName: db.settings.mallName || '', slogan: db.settings.slogan || '',
-        address: db.settings.address || '', servicePhone: db.settings.servicePhone || '',
-        businessHours: db.settings.businessHours || '', scalePxPerM: Number(db.settings.scalePxPerM) || 10,
-        idleSeconds: Number(db.settings.idleSeconds) || 90, screensaverSeconds: Number(db.settings.screensaverSeconds) || 45,
-        adminPass: db.settings.adminPass || ''
+        startNode: M.settings.startNode || null, startName: rs.node ? nodeName(rs.node) : '',
+        startValid: !!rs.node, mallName: M.settings.mallName || '', slogan: M.settings.slogan || '',
+        address: M.settings.address || '', servicePhone: M.settings.servicePhone || '',
+        businessHours: M.settings.businessHours || '', scalePxPerM: Number(M.settings.scalePxPerM) || 10,
+        idleSeconds: Number(M.settings.idleSeconds) || 90, screensaverSeconds: Number(M.settings.screensaverSeconds) || 45
       } });
     }
     if (method === 'PUT') {
       const b = await readBody(req);
-      if (b.startNode !== undefined) { if (b.startNode && !nodeById(b.startNode)) return sendJson(res, 400, { ok: false, error: '所选起点节点不存在' }); db.settings.startNode = b.startNode || null; }
-      ['mallName', 'slogan', 'address', 'servicePhone', 'businessHours'].forEach((k) => { if (b[k] != null) db.settings[k] = String(b[k]); });
-      if (b.scalePxPerM != null) db.settings.scalePxPerM = Number(b.scalePxPerM) || 10;
-      if (b.idleSeconds != null) db.settings.idleSeconds = Math.max(10, Number(b.idleSeconds) || 90);
+      if (b.startNode !== undefined) { if (b.startNode && !nodeById(b.startNode)) return sendJson(res, 400, { ok: false, error: '所选起点节点不存在' }); M.settings.startNode = b.startNode || null; }
+      ['mallName', 'slogan', 'address', 'servicePhone', 'businessHours'].forEach((k) => { if (b[k] != null) M.settings[k] = String(b[k]); });
+      if (b.scalePxPerM != null) M.settings.scalePxPerM = Number(b.scalePxPerM) || 10;
+      if (b.idleSeconds != null) M.settings.idleSeconds = Math.max(10, Number(b.idleSeconds) || 90);
       if (b.screensaverSeconds != null) {
-        db.settings.screensaverSeconds = Math.max(5, Number(b.screensaverSeconds) || 45);
-        if (db.settings.screensaver) db.settings.screensaver.idleSeconds = Math.max(10, Number(b.screensaverSeconds) || 45);
+        M.settings.screensaverSeconds = Math.max(5, Number(b.screensaverSeconds) || 45);
+        if (M.settings.screensaver) M.settings.screensaver.idleSeconds = Math.max(10, Number(b.screensaverSeconds) || 45);
       }
-      if (b.adminPass != null && String(b.adminPass).trim()) db.settings.adminPass = String(b.adminPass).trim();
       saveDb();
-      const s = nodeById(db.settings.startNode);
-      return sendJson(res, 200, { ok: true, data: { startNode: db.settings.startNode || null, startName: s ? nodeName(s) : '', startValid: !!s } });
+      const s = nodeById(M.settings.startNode);
+      return sendJson(res, 200, { ok: true, data: { startNode: M.settings.startNode || null, startName: s ? nodeName(s) : '', startValid: !!s } });
     }
   }
 
   // ---- 待机页（屏保）：播放参数 ----
   if (pathname === '/api/screensaver') {
-    if (method === 'GET') return sendJson(res, 200, { ok: true, data: db.settings.screensaver });
+    if (method === 'GET') return sendJson(res, 200, { ok: true, data: M.settings.screensaver });
     if (method === 'PUT') {
       const b = await readBody(req);
-      const s = db.settings.screensaver;
+      const s = M.settings.screensaver;
       ['enabled', 'loop', 'mute', 'showClock', 'showMallName', 'showHint', 'showProgress'].forEach((k) => { if (b[k] != null) s[k] = !!b[k]; });
       if (b.transition != null && SS_TRANSITIONS.includes(b.transition)) s.transition = b.transition;
       if (b.order != null && SS_ORDERS.includes(b.order)) s.order = b.order;
@@ -989,7 +1264,7 @@ async function handleApi(req, res, method, pathname, parsed) {
       if (b.dim != null) s.dim = Math.max(0, Math.min(0.7, Number(b.dim) || 0));
       if (b.idleSeconds != null) {
         s.idleSeconds = Math.max(10, Number(b.idleSeconds) || s.idleSeconds);
-        db.settings.screensaverSeconds = s.idleSeconds;
+        M.settings.screensaverSeconds = s.idleSeconds;
       }
       saveDb();
       return sendJson(res, 200, { ok: true, data: s });
@@ -1000,8 +1275,8 @@ async function handleApi(req, res, method, pathname, parsed) {
     const b = await readBody(req);
     const it = normScreenItem(b);
     if (!it.url) return sendJson(res, 400, { ok: false, error: '请先上传素材或填写链接' });
-    if (b.duration == null) it.duration = Math.max(3, Number(db.settings.screensaver.interval) || 8);
-    db.settings.screensaver.items.push(it);
+    if (b.duration == null) it.duration = Math.max(3, Number(M.settings.screensaver.interval) || 8);
+    M.settings.screensaver.items.push(it);
     saveDb();
     return sendJson(res, 200, { ok: true, data: it });
   }
@@ -1009,11 +1284,11 @@ async function handleApi(req, res, method, pathname, parsed) {
   if (method === 'POST' && pathname === '/api/screensaver/reorder') {
     const b = await readBody(req);
     const ids = Array.isArray(b.ids) ? b.ids : [];
-    const cur = db.settings.screensaver.items;
+    const cur = M.settings.screensaver.items;
     const byId = new Map(cur.map((x) => [x.id, x]));
     const next = ids.map((id) => byId.get(id)).filter(Boolean);
     cur.forEach((x) => { if (!ids.includes(x.id)) next.push(x); });
-    db.settings.screensaver.items = next;
+    M.settings.screensaver.items = next;
     saveDb();
     return sendJson(res, 200, { ok: true, data: next });
   }
@@ -1021,7 +1296,7 @@ async function handleApi(req, res, method, pathname, parsed) {
   const sm = pathname.match(/^\/api\/screensaver\/items\/([^/]+)$/);
   if (sm) {
     const id = sm[1];
-    const it = db.settings.screensaver.items.find((x) => x.id === id);
+    const it = M.settings.screensaver.items.find((x) => x.id === id);
     if (method === 'PUT') {
       if (!it) return sendJson(res, 404, { ok: false, error: '素材不存在' });
       const b = await readBody(req);
@@ -1038,7 +1313,7 @@ async function handleApi(req, res, method, pathname, parsed) {
     }
     if (method === 'DELETE') {
       if (!it) return sendJson(res, 404, { ok: false, error: '素材不存在' });
-      db.settings.screensaver.items = db.settings.screensaver.items.filter((x) => x.id !== id);
+      M.settings.screensaver.items = M.settings.screensaver.items.filter((x) => x.id !== id);
       saveDb();
       return sendJson(res, 200, { ok: true });
     }
@@ -1046,10 +1321,10 @@ async function handleApi(req, res, method, pathname, parsed) {
 
   // ---- 服务指南：总配置（标题/副标题/总开关） ----
   if (pathname === '/api/guide') {
-    if (method === 'GET') return sendJson(res, 200, { ok: true, data: db.settings.guide });
+    if (method === 'GET') return sendJson(res, 200, { ok: true, data: M.settings.guide });
     if (method === 'PUT') {
       const b = await readBody(req);
-      const g = db.settings.guide;
+      const g = M.settings.guide;
       if (b.enabled != null) g.enabled = !!b.enabled;
       if (typeof b.title === 'string' && b.title.trim()) g.title = b.title.trim().slice(0, GUIDE_TITLE_MAX);
       if (typeof b.sub === 'string') g.sub = b.sub.trim();
@@ -1062,25 +1337,25 @@ async function handleApi(req, res, method, pathname, parsed) {
     const b = await readBody(req);
     const c = normGuideCard(b);
     if (!c.title) return sendJson(res, 400, { ok: false, error: '请填写卡片标题' });
-    db.settings.guide.cards.push(c);
+    M.settings.guide.cards.push(c);
     saveDb();
     return sendJson(res, 200, { ok: true, data: c });
   }
   // ---- 服务指南：恢复默认卡片（注意：需排在 /cards/:id 之前） ----
   if (method === 'POST' && pathname === '/api/guide/reset') {
-    db.settings.guide = defaultGuide();
+    M.settings.guide = defaultGuide();
     saveDb();
-    return sendJson(res, 200, { ok: true, data: db.settings.guide });
+    return sendJson(res, 200, { ok: true, data: M.settings.guide });
   }
   // ---- 服务指南：卡片排序 ----
   if (method === 'POST' && pathname === '/api/guide/cards/reorder') {
     const b = await readBody(req);
     const ids = Array.isArray(b.ids) ? b.ids : [];
-    const cur = db.settings.guide.cards;
+    const cur = M.settings.guide.cards;
     const byId = new Map(cur.map((x) => [x.id, x]));
     const next = ids.map((id) => byId.get(id)).filter(Boolean);
     cur.forEach((x) => { if (!ids.includes(x.id)) next.push(x); });
-    db.settings.guide.cards = next;
+    M.settings.guide.cards = next;
     saveDb();
     return sendJson(res, 200, { ok: true, data: next });
   }
@@ -1088,7 +1363,7 @@ async function handleApi(req, res, method, pathname, parsed) {
   const gdm = pathname.match(/^\/api\/guide\/cards\/([^/]+)$/);
   if (gdm) {
     const id = gdm[1];
-    const c = db.settings.guide.cards.find((x) => x.id === id);
+    const c = M.settings.guide.cards.find((x) => x.id === id);
     if (method === 'PUT') {
       if (!c) return sendJson(res, 404, { ok: false, error: '卡片不存在' });
       const b = await readBody(req);
@@ -1114,23 +1389,22 @@ async function handleApi(req, res, method, pathname, parsed) {
     }
     if (method === 'DELETE') {
       if (!c) return sendJson(res, 404, { ok: false, error: '卡片不存在' });
-      db.settings.guide.cards = db.settings.guide.cards.filter((x) => x.id !== id);
+      M.settings.guide.cards = M.settings.guide.cards.filter((x) => x.id !== id);
       saveDb();
       return sendJson(res, 200, { ok: true });
     }
   }
 
-  let m;
   // ---- 多屏管理：屏幕登记表（admin）----
   if (pathname === '/api/screens') {
-    if (method === 'GET') return sendJson(res, 200, { ok: true, data: db.screens });
+    if (method === 'GET') return sendJson(res, 200, { ok: true, data: M.screens });
     if (method === 'POST') {
       const b = await readBody(req);
       const id = normScreenId(b.id);
       if (!id) return sendJson(res, 400, { ok: false, error: '屏幕标识（ID）不能为空，仅允许字母/数字/中划线/点' });
-      if (db.screens.some((x) => x.id === id)) return sendJson(res, 400, { ok: false, error: '屏幕标识已存在：' + id });
-      const s = normScreens([Object.assign({}, b, { id })], db.floors)[0];
-      db.screens.push(s);
+      if (M.screens.some((x) => x.id === id)) return sendJson(res, 400, { ok: false, error: '屏幕标识已存在：' + id });
+      const s = normScreens([Object.assign({}, b, { id })], M.floors)[0];
+      M.screens.push(s);
       saveDb();
       return sendJson(res, 200, { ok: true, data: s });
     }
@@ -1140,30 +1414,30 @@ async function handleApi(req, res, method, pathname, parsed) {
     const id = m[1];
     // 立即切换 / 重新下发：仅 rev+1，屏端轮询到即自动重新应用
     if (m[2] && method === 'POST') {
-      const s = db.screens.find((x) => x.id === id);
+      const s = M.screens.find((x) => x.id === id);
       if (!s) return sendJson(res, 404, { ok: false, error: '屏幕不存在' });
       s.rev = (Number(s.rev) || 0) + 1;
       saveDb();
       return sendJson(res, 200, { ok: true, data: s });
     }
     if (method === 'GET') {
-      const s = db.screens.find((x) => x.id === id);
+      const s = M.screens.find((x) => x.id === id);
       if (!s) return sendJson(res, 404, { ok: false, error: '屏幕不存在' });
       return sendJson(res, 200, { ok: true, data: s });
     }
     if (method === 'PUT') {
-      const s = db.screens.find((x) => x.id === id);
+      const s = M.screens.find((x) => x.id === id);
       if (!s) return sendJson(res, 404, { ok: false, error: '屏幕不存在' });
       const b = await readBody(req);
-      const next = normScreens([Object.assign({}, s, b, { id: s.id, rev: (Number(s.rev) || 0) + 1 })], db.floors)[0];
-      db.screens[db.screens.indexOf(s)] = next;
+      const next = normScreens([Object.assign({}, s, b, { id: s.id, rev: (Number(s.rev) || 0) + 1 })], M.floors)[0];
+      M.screens[M.screens.indexOf(s)] = next;
       saveDb();
       return sendJson(res, 200, { ok: true, data: next });
     }
     if (method === 'DELETE') {
-      const i = db.screens.findIndex((x) => x.id === id);
+      const i = M.screens.findIndex((x) => x.id === id);
       if (i < 0) return sendJson(res, 404, { ok: false, error: '屏幕不存在' });
-      db.screens.splice(i, 1);
+      M.screens.splice(i, 1);
       saveDb();
       return sendJson(res, 200, { ok: true });
     }
@@ -1174,15 +1448,15 @@ async function handleApi(req, res, method, pathname, parsed) {
     if (method === 'GET') return sendJson(res, 200, { ok: true, data: floorsSorted() });
     if (method === 'POST') {
       const b = await readBody(req);
-      const maxLevel = db.floors.reduce((mx, f) => Math.max(mx, Number(f.level) || 0), 0);
+      const maxLevel = M.floors.reduce((mx, f) => Math.max(mx, Number(f.level) || 0), 0);
       let id = nextFloorId();
       const want = String(b.id || '').trim();
-      if (FLOOR_ID_RE.test(want) && !db.floors.some((f) => f.id === want)) id = want;
-      const f = { id, name: b.name || '新楼层', short: b.short || `F${maxLevel + 1}`, level: Number(b.level) || maxLevel + 1, theme: b.theme || '', plan: { mode: 'draw', width: 1000, height: 700, scalePxPerM: Number(db.settings.scalePxPerM) || 10, originX: 0, originY: 0, walls: [], objects: [] } };
-      db.floors.push(f);
+      if (FLOOR_ID_RE.test(want) && !M.floors.some((f) => f.id === want)) id = want;
+      const f = { id, name: b.name || '新楼层', short: b.short || `F${maxLevel + 1}`, level: Number(b.level) || maxLevel + 1, theme: b.theme || '', plan: { mode: 'draw', width: 1000, height: 700, scalePxPerM: Number(M.settings.scalePxPerM) || 10, originX: 0, originY: 0, walls: [], objects: [] } };
+      M.floors.push(f);
       compactFloorIds();
       saveDb();
-      return sendJson(res, 200, { ok: true, data: db.floors.find((x) => x.id === f.id) || f });
+      return sendJson(res, 200, { ok: true, data: M.floors.find((x) => x.id === f.id) || f });
     }
   }
   m = pathname.match(/^\/api\/floors\/([^/]+)$/);
@@ -1190,7 +1464,7 @@ async function handleApi(req, res, method, pathname, parsed) {
     const id = m[1];
     if (method === 'PUT') {
       const b = await readBody(req);
-      const f = db.floors.find((x) => x.id === id);
+      const f = M.floors.find((x) => x.id === id);
       if (!f) return sendJson(res, 404, { ok: false, error: '楼层不存在' });
       ['name', 'short', 'theme'].forEach((k) => { if (b[k] != null) f[k] = b[k]; });
       if (b.level != null) f.level = Number(b.level);
@@ -1198,12 +1472,12 @@ async function handleApi(req, res, method, pathname, parsed) {
       return sendJson(res, 200, { ok: true, data: f });
     }
     if (method === 'DELETE') {
-      if (!db.floors.some((x) => x.id === id)) return sendJson(res, 404, { ok: false, error: '楼层不存在' });
-      db.shops = db.shops.filter((s) => s.floorId !== id);
-      db.facilities = db.facilities.filter((f) => f.floorId !== id);
-      db.graph.nodes = db.graph.nodes.filter((n) => n.floorId !== id);
+      if (!M.floors.some((x) => x.id === id)) return sendJson(res, 404, { ok: false, error: '楼层不存在' });
+      M.shops = M.shops.filter((s) => s.floorId !== id);
+      M.facilities = M.facilities.filter((f) => f.floorId !== id);
+      M.graph.nodes = M.graph.nodes.filter((n) => n.floorId !== id);
       pruneOrphanEdges();
-      db.floors = db.floors.filter((x) => x.id !== id);
+      M.floors = M.floors.filter((x) => x.id !== id);
       pruneNodeRefs();
       compactFloorIds();
       resolveStartNode();
@@ -1214,7 +1488,7 @@ async function handleApi(req, res, method, pathname, parsed) {
   // 楼层平面（墙体等）
   m = pathname.match(/^\/api\/floors\/([^/]+)\/plan$/);
   if (m) {
-    const f = db.floors.find((x) => x.id === m[1]);
+    const f = M.floors.find((x) => x.id === m[1]);
     if (!f) return sendJson(res, 404, { ok: false, error: '楼层不存在' });
     if (method === 'PUT') {
       const b = await readBody(req);
@@ -1272,7 +1546,7 @@ async function handleApi(req, res, method, pathname, parsed) {
     if (!['png', 'jpg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) ext = 'png';
     const buf = Buffer.from(mm[2], 'base64');
     if (buf.length > 8e6) return sendJson(res, 400, { ok: false, error: '图片过大（≤8MB）' });
-    const f = db.floors.find((x) => x.id === b.floorId);
+    const f = M.floors.find((x) => x.id === b.floorId);
     if (!f) return sendJson(res, 404, { ok: false, error: '楼层不存在' });
     const upDir = path.join(PUBLIC_DIR, 'uploads');
     try { fs.mkdirSync(upDir, { recursive: true }); } catch (e) { /* ignore */ }
@@ -1290,21 +1564,21 @@ async function handleApi(req, res, method, pathname, parsed) {
 
   // ---- 店铺 CRUD ----
   if (pathname === '/api/shops') {
-    if (method === 'GET') return sendJson(res, 200, { ok: true, data: db.shops.map(shopOut) });
+    if (method === 'GET') return sendJson(res, 200, { ok: true, data: M.shops.map(shopOut) });
     if (method === 'POST') {
       const b = await readBody(req);
       if (!b.name) return sendJson(res, 400, { ok: false, error: '请填写店铺名称' });
       if (b.floorId && !floorById(b.floorId)) return sendJson(res, 400, { ok: false, error: '楼层不存在' });
       const meta = catMeta(b.cat || 'other');
       const s = {
-        id: b.id || uid('S'), name: String(b.name), floorId: b.floorId || (db.floors[0] || {}).id, cat: b.cat || 'other',
+        id: b.id || uid('S'), name: String(b.name), floorId: b.floorId || (M.floors[0] || {}).id, cat: b.cat || 'other',
         letter: (b.letter || String(b.name)[0] || 'A').toUpperCase().slice(0, 1),
         x: num(b.x, 100), y: num(b.y, 100), w: Math.max(20, num(b.w, 140)), h: Math.max(20, num(b.h, 90)),
         color: b.color || meta.color, phone: b.phone || '', hours: b.hours || '10:00 - 22:00',
         logo: b.logo || '',
         desc: b.desc || '', tags: Array.isArray(b.tags) ? b.tags : []
       };
-      db.shops.push(s);
+      M.shops.push(s);
       saveDb();
       return sendJson(res, 200, { ok: true, data: shopOut(s) });
     }
@@ -1312,7 +1586,7 @@ async function handleApi(req, res, method, pathname, parsed) {
   m = pathname.match(/^\/api\/shops\/([^/]+)$/);
   if (m) {
     const id = m[1];
-    const s = db.shops.find((x) => x.id === id);
+    const s = M.shops.find((x) => x.id === id);
     if (method === 'PUT') {
       if (!s) return sendJson(res, 404, { ok: false, error: '店铺不存在' });
       const b = await readBody(req);
@@ -1325,8 +1599,8 @@ async function handleApi(req, res, method, pathname, parsed) {
     }
     if (method === 'DELETE') {
       if (!s) return sendJson(res, 404, { ok: false, error: '店铺不存在' });
-      db.shops = db.shops.filter((x) => x.id !== id);
-      db.graph.nodes.forEach((n) => { if (n.shopId === id) delete n.shopId; }); // 节点保留，避免破坏路网
+      M.shops = M.shops.filter((x) => x.id !== id);
+      M.graph.nodes.forEach((n) => { if (n.shopId === id) delete n.shopId; }); // 节点保留，避免破坏路网
       saveDb();
       return sendJson(res, 200, { ok: true });
     }
@@ -1334,13 +1608,13 @@ async function handleApi(req, res, method, pathname, parsed) {
 
   // ---- 设施 CRUD ----
   if (pathname === '/api/facilities') {
-    if (method === 'GET') return sendJson(res, 200, { ok: true, data: db.facilities.map(facOut) });
+    if (method === 'GET') return sendJson(res, 200, { ok: true, data: M.facilities.map(facOut) });
     if (method === 'POST') {
       const b = await readBody(req);
       if (b.floorId && !floorById(b.floorId)) return sendJson(res, 400, { ok: false, error: '楼层不存在' });
       const meta = facMeta(b.type || 'other');
-      const f = { id: b.id || uid('FA'), type: b.type || 'other', name: b.name || meta.label, floorId: b.floorId || (db.floors[0] || {}).id, x: num(b.x, 100), y: num(b.y, 100) };
-      db.facilities.push(f);
+      const f = { id: b.id || uid('FA'), type: b.type || 'other', name: b.name || meta.label, floorId: b.floorId || (M.floors[0] || {}).id, x: num(b.x, 100), y: num(b.y, 100) };
+      M.facilities.push(f);
       saveDb();
       return sendJson(res, 200, { ok: true, data: facOut(f) });
     }
@@ -1348,7 +1622,7 @@ async function handleApi(req, res, method, pathname, parsed) {
   m = pathname.match(/^\/api\/facilities\/([^/]+)$/);
   if (m) {
     const id = m[1];
-    const f = db.facilities.find((x) => x.id === id);
+    const f = M.facilities.find((x) => x.id === id);
     if (method === 'PUT') {
       if (!f) return sendJson(res, 404, { ok: false, error: '设施不存在' });
       const b = await readBody(req);
@@ -1359,8 +1633,8 @@ async function handleApi(req, res, method, pathname, parsed) {
     }
     if (method === 'DELETE') {
       if (!f) return sendJson(res, 404, { ok: false, error: '设施不存在' });
-      db.facilities = db.facilities.filter((x) => x.id !== id);
-      db.graph.nodes.forEach((n) => { if (n.facilityId === id) delete n.facilityId; });
+      M.facilities = M.facilities.filter((x) => x.id !== id);
+      M.graph.nodes.forEach((n) => { if (n.facilityId === id) delete n.facilityId; });
       saveDb();
       return sendJson(res, 200, { ok: true });
     }
@@ -1368,12 +1642,12 @@ async function handleApi(req, res, method, pathname, parsed) {
 
   // ---- 活动 CRUD ----
   if (pathname === '/api/promos') {
-    if (method === 'GET') return sendJson(res, 200, { ok: true, data: db.promos.map(promoOut) });
+    if (method === 'GET') return sendJson(res, 200, { ok: true, data: M.promos.map(promoOut) });
     if (method === 'POST') {
       const b = await readBody(req);
       if (!b.title) return sendJson(res, 400, { ok: false, error: '请填写活动标题' });
       const p = { id: b.id || uid('PR'), title: String(b.title), cat: b.cat || '品牌特惠', startDate: b.startDate || '', endDate: b.endDate || '', floorId: b.floorId || '', color: b.color || '#ef6c4d', desc: b.desc || '', media: normMedia(b.media) };
-      db.promos.unshift(p);
+      M.promos.unshift(p);
       saveDb();
       return sendJson(res, 200, { ok: true, data: promoOut(p) });
     }
@@ -1381,7 +1655,7 @@ async function handleApi(req, res, method, pathname, parsed) {
   m = pathname.match(/^\/api\/promos\/([^/]+)$/);
   if (m) {
     const id = m[1];
-    const p = db.promos.find((x) => x.id === id);
+    const p = M.promos.find((x) => x.id === id);
     if (method === 'PUT') {
       if (!p) return sendJson(res, 404, { ok: false, error: '活动不存在' });
       const b = await readBody(req);
@@ -1393,7 +1667,7 @@ async function handleApi(req, res, method, pathname, parsed) {
     }
     if (method === 'DELETE') {
       if (!p) return sendJson(res, 404, { ok: false, error: '活动不存在' });
-      db.promos = db.promos.filter((x) => x.id !== id);
+      M.promos = M.promos.filter((x) => x.id !== id);
       saveDb();
       return sendJson(res, 200, { ok: true });
     }
@@ -1401,11 +1675,11 @@ async function handleApi(req, res, method, pathname, parsed) {
 
   // ---- Banner CRUD ----
   if (pathname === '/api/banners') {
-    if (method === 'GET') return sendJson(res, 200, { ok: true, data: db.banners });
+    if (method === 'GET') return sendJson(res, 200, { ok: true, data: M.banners });
     if (method === 'POST') {
       const b = await readBody(req);
       const bn = { id: b.id || uid('BN'), title: b.title || '新 Banner', sub: b.sub || '', bg: b.bg || 'linear-gradient(135deg,#4a7fe0,#7b5cff)', badge: b.badge || '', action: b.action || 'floor', media: normMedia(b.media) };
-      db.banners.push(bn);
+      M.banners.push(bn);
       saveDb();
       return sendJson(res, 200, { ok: true, data: bn });
     }
@@ -1413,7 +1687,7 @@ async function handleApi(req, res, method, pathname, parsed) {
   m = pathname.match(/^\/api\/banners\/([^/]+)$/);
   if (m) {
     const id = m[1];
-    const bn = db.banners.find((x) => x.id === id);
+    const bn = M.banners.find((x) => x.id === id);
     if (method === 'PUT') {
       if (!bn) return sendJson(res, 404, { ok: false, error: 'Banner 不存在' });
       const b = await readBody(req);
@@ -1424,7 +1698,7 @@ async function handleApi(req, res, method, pathname, parsed) {
     }
     if (method === 'DELETE') {
       if (!bn) return sendJson(res, 404, { ok: false, error: 'Banner 不存在' });
-      db.banners = db.banners.filter((x) => x.id !== id);
+      M.banners = M.banners.filter((x) => x.id !== id);
       saveDb();
       return sendJson(res, 200, { ok: true });
     }
@@ -1432,13 +1706,13 @@ async function handleApi(req, res, method, pathname, parsed) {
 
   // ---- 节点 CRUD ----
   if (pathname === '/api/nodes') {
-    if (method === 'GET') return sendJson(res, 200, { ok: true, data: db.graph.nodes.map(nodeOut) });
+    if (method === 'GET') return sendJson(res, 200, { ok: true, data: M.graph.nodes.map(nodeOut) });
     if (method === 'POST') {
       const b = await readBody(req);
-      const n = { id: b.id || nextNodeId(), x: num(b.x, 0), y: num(b.y, 0), floorId: b.floorId || (db.floors[0] || {}).id };
+      const n = { id: b.id || nextNodeId(), x: num(b.x, 0), y: num(b.y, 0), floorId: b.floorId || (M.floors[0] || {}).id };
       if (b.shopId) n.shopId = b.shopId;
       if (b.facilityId) n.facilityId = b.facilityId;
-      db.graph.nodes.push(n);
+      M.graph.nodes.push(n);
       saveDb();
       return sendJson(res, 200, { ok: true, data: nodeOut(n) });
     }
@@ -1459,8 +1733,8 @@ async function handleApi(req, res, method, pathname, parsed) {
     }
     if (method === 'DELETE') {
       if (!n) return sendJson(res, 404, { ok: false, error: '节点不存在' });
-      db.graph.nodes = db.graph.nodes.filter((x) => x.id !== id);
-      db.graph.edges = db.graph.edges.filter((e) => e.from !== id && e.to !== id);
+      M.graph.nodes = M.graph.nodes.filter((x) => x.id !== id);
+      M.graph.edges = M.graph.edges.filter((e) => e.from !== id && e.to !== id);
       resolveStartNode();
       saveDb();
       return sendJson(res, 200, { ok: true });
@@ -1469,12 +1743,12 @@ async function handleApi(req, res, method, pathname, parsed) {
 
   // ---- 边 CRUD ----
   if (pathname === '/api/edges') {
-    if (method === 'GET') return sendJson(res, 200, { ok: true, data: db.graph.edges });
+    if (method === 'GET') return sendJson(res, 200, { ok: true, data: M.graph.edges });
     if (method === 'POST') {
       const b = await readBody(req);
       if (!nodeById(b.from) || !nodeById(b.to)) return sendJson(res, 400, { ok: false, error: '端点节点不存在' });
       const e = { id: b.id || uid('E'), from: b.from, to: b.to, type: b.type || 'walk', weight: typeof b.weight === 'number' ? b.weight : undefined };
-      db.graph.edges.push(e);
+      M.graph.edges.push(e);
       saveDb();
       return sendJson(res, 200, { ok: true, data: e });
     }
@@ -1482,7 +1756,7 @@ async function handleApi(req, res, method, pathname, parsed) {
   m = pathname.match(/^\/api\/edges\/([^/]+)$/);
   if (m) {
     if (method === 'DELETE') {
-      db.graph.edges = db.graph.edges.filter((x) => x.id !== m[1]);
+      M.graph.edges = M.graph.edges.filter((x) => x.id !== m[1]);
       saveDb();
       return sendJson(res, 200, { ok: true });
     }
@@ -1491,23 +1765,34 @@ async function handleApi(req, res, method, pathname, parsed) {
   return sendJson(res, 404, { ok: false, error: '接口不存在' });
 }
 
-// ---------- 启动自愈 ----------
-compactFloorIds();
-db.floors.forEach(ensureFloorPlan);
+// ---------- 启动自愈（逐商场执行） ----------
+let __fixed = 0;
+db.malls.forEach((mm) => {
+  setMall(mm.id);
+  const before = M.graph.edges.length;
+  compactFloorIds();
+  M.floors.forEach(ensureFloorPlan);
+  __fixed += before - M.graph.edges.length; // compactFloorIds 重建连线时已按需清理
+});
 const __orphan = pruneOrphanEdges();
-if (__orphan > 0) { console.warn(`[数据修复] 清理 ${__orphan} 条孤儿边`); saveDb(); }
+if (__orphan > 0) { console.warn(`[数据修复] 清理 ${__orphan} 条孤儿边`); __fixed += __orphan; }
 const __refs = pruneNodeRefs();
-if (__refs > 0) { console.warn(`[数据修复] 清理 ${__refs} 处失效节点引用`); saveDb(); }
-resolveStartNode();
+if (__refs > 0) { console.warn(`[数据修复] 清理 ${__refs} 处失效节点引用`); __fixed += __refs; }
+db.malls.forEach((mm) => { setMall(mm.id); resolveStartNode(); });
+setMall(process.env.MALL || '');
+if (__fixed > 0) saveDb();
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log('============================================');
-  console.log(' 商场 · 场馆智能导视系统 服务已启动');
-  console.log(' 前台导视终端: http://localhost:' + PORT + '/');
+  console.log(' 商场 · 场馆智能导视系统 服务已启动（多商场版）');
+  console.log(' 前台导视终端: http://localhost:' + PORT + '/?mall=<商场ID>');
   console.log(' 管理后台:     http://localhost:' + PORT + '/admin.html');
   console.log(' 局域网访问:   将 localhost 替换为本机内网 IP');
-  console.log(' 管理密码:     ' + (db.settings.adminPass || '(未设置)'));
-  console.log(' 楼层:         ' + db.floors.map((f) => `${f.id}=${f.name}(${f.short})`).join(', '));
-  console.log(' 数据:         ' + db.shops.length + ' 店铺 / ' + db.facilities.length + ' 设施 / ' + db.graph.nodes.length + ' 节点');
+  console.log(' 商场数:       ' + db.malls.length + '（' + db.malls.map((m) => m.id + '=' + m.name + (m.status === 'disabled' ? '[停用]' : '')).join(', ') + '）');
+  console.log(' 当前商场:     ' + MID + '（环境变量 MALL 可指定默认商场）');
+  db.malls.forEach((mm) => {
+    console.log(`  · ${mm.id} ${mm.name}: ${mm.data.floors.length} 楼层 / ${mm.data.shops.length} 店铺 / ${mm.data.graph.nodes.length} 节点 / ${mm.data.screens.length} 屏`);
+  });
+  console.log(' 平台账号:     admin（密码为原管理密码；用户管理中可增改）');
   console.log('============================================');
 });

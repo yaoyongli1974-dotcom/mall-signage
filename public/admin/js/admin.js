@@ -10,6 +10,10 @@ const $svg = (n, a) => { const e = document.createElementNS('http://www.w3.org/2
 
 const TOKEN_KEY = 'mallAdminToken';
 let token = localStorage.getItem(TOKEN_KEY) || '';
+let me = null;             // 当前登录账号 {id,username,role,mallId,perms}；role = platform | mall
+let malls = [];            // 平台侧商场列表（含数据计数）
+let users = [];            // 用户列表（平台=全量，商场=本商场）
+let curMall = localStorage.getItem('mallAdminMall') || '';  // 平台账号当前操作的商场
 let D = { floors: [], shops: [], facilities: [], promos: [], banners: [], graph: { nodes: [], edges: [] }, settings: {} };
 let cats = [], facTypes = [];
 let tab = 'overview';
@@ -19,7 +23,8 @@ let editorFloor = null, selShopId = null, editorMode = 'shop'; // shop=拖拽店
 /* ---------------- 请求封装 ---------------- */
 async function api(method, path, body) {
   const opt = { method, headers: {} };
-  if (token) opt.headers['x-admin-token'] = token;
+  if (token) { opt.headers['x-auth-token'] = token; opt.headers['x-admin-token'] = token; }
+  if (me && me.role === 'platform' && curMall) opt.headers['x-mall-id'] = curMall;
   if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
   const r = await fetch(path, opt);
   if (r.status === 401) { logout(); throw new Error('登录已失效，请重新登录'); }
@@ -128,33 +133,74 @@ function showApp() { $('#login').classList.add('hidden'); $('#adminApp').hidden 
 
 $('#loginBtn').onclick = doLogin;
 $('#loginPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+$('#loginUser').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
 async function doLogin() {
-  const pass = $('#loginPass').value.trim();
-  if (!pass) { $('#loginTip').textContent = '请输入密码'; $('#loginTip').className = 'login-tip err'; return; }
-  const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pass }) });
+  const username = $('#loginUser').value.trim(), pass = $('#loginPass').value;
+  if (!username || !pass) { $('#loginTip').textContent = '请输入用户名与密码'; $('#loginTip').className = 'login-tip err'; return; }
+  const r = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password: pass }) });
   const j = await r.json();
   if (j.ok) {
-    token = j.token; localStorage.setItem(TOKEN_KEY, token);
-    $('#loginTip').textContent = '默认密码 admin123'; $('#loginTip').className = 'login-tip';
+    token = j.token; me = j.user;
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem('mallAdminUser', JSON.stringify(me));
+    curMall = me.role === 'mall' ? me.mallId : '';
+    localStorage.setItem('mallAdminMall', curMall);
+    $('#loginTip').textContent = '平台账号默认 admin / admin123'; $('#loginTip').className = 'login-tip';
     await boot();
   } else {
-    $('#loginTip').textContent = j.error || '密码错误'; $('#loginTip').className = 'login-tip err';
+    $('#loginTip').textContent = j.error || '登录失败'; $('#loginTip').className = 'login-tip err';
   }
 }
 $('#logout').onclick = logout;
-function logout() { token = ''; localStorage.removeItem(TOKEN_KEY); showLogin(); }
+function logout() { token = ''; me = null; localStorage.removeItem(TOKEN_KEY); localStorage.removeItem('mallAdminUser'); showLogin(); }
 
 /* ---------------- 数据加载 ---------------- */
 async function loadAll() {
-  const m = await getPublic('/api/map');
+  const m = await getPublic('/api/map' + (me && me.role === 'platform' && curMall ? '?mall=' + encodeURIComponent(curMall) : ''));
   if (!m || !m.ok) throw new Error('数据加载失败');
   D.floors = m.floors || []; D.shops = m.shops || []; D.facilities = m.facilities || [];
   D.promos = m.promos || []; D.banners = m.banners || []; D.graph = m.graph || { nodes: [], edges: [] };
   D.settings = m.settings || {}; cats = m.categories || []; facTypes = m.facilityTypes || [];
+  if (m.mallId) { curMall = m.mallId; localStorage.setItem('mallAdminMall', curMall); }
   const sc = await api('GET', '/api/screens');
   D.screens = (sc && sc.ok) ? (sc.data || []) : [];
-  if (!editorFloor) editorFloor = (D.floors[0] || {}).id;
+  if (me) {
+    const ul = await api('GET', '/api/users');
+    users = (ul && ul.ok) ? (ul.data || []) : [];
+    if (me.role === 'platform') {
+      const ml = await api('GET', '/api/malls');
+      malls = (ml && ml.ok) ? (ml.data || []) : [];
+    }
+    applyRoleUI();
+  }
+  if (!editorFloor || !D.floors.some((f) => f.id === editorFloor)) editorFloor = (D.floors[0] || {}).id;
 }
+function applyRoleUI() {
+  const isPlatform = me && me.role === 'platform';
+  $$('#sideNav .pt-only').forEach((b) => b.hidden = !isPlatform);
+  // 商场账号：按模块权限显隐页签（perms 空 = 全部）
+  const PERM_OF_TAB = { floors: 'floors', shops: 'shops', facilities: 'facilities', promos: 'promos', banners: 'banners', screen: 'standby', guide: 'guide', screens: 'screens', map: 'map', graph: 'graph', settings: 'settings' };
+  $$('#sideNav button').forEach((b) => {
+    const t = b.dataset.tab;
+    if (me && me.role === 'mall' && PERM_OF_TAB[t]) b.hidden = !canPerm(PERM_OF_TAB[t]);
+    if (t === 'overview') b.hidden = false;
+  });
+  const sw = $('#mallSwitch');
+  if (sw) {
+    sw.hidden = !isPlatform;
+    if (isPlatform) {
+      sw.innerHTML = malls.map((mm) => `<option value="${esc(mm.id)}" ${mm.id === curMall ? 'selected' : ''}>🏬 ${esc(mm.name)}${mm.status === 'disabled' ? '（停用）' : ''}</option>`).join('');
+    }
+  }
+}
+function switchMall(id) {
+  if (id === curMall) return;
+  curMall = id; localStorage.setItem('mallAdminMall', id);
+  editorFloor = null; selShopId = null; editing = {}; tab = 'overview';
+  $$('#sideNav button').forEach((x) => x.classList.toggle('on', x.dataset.tab === 'overview'));
+  refresh();
+}
+const canPerm = (mod) => !me || me.role === 'platform' || !me.perms || !me.perms.length || me.perms.includes(mod);
 const catMeta = (k) => cats.find((c) => c.key === k) || { key: k, label: '其他', icon: '📍', color: '#90a4ae' };
 const facMeta = (t) => facTypes.find((f) => f.key === t) || { key: t, label: '设施', icon: '📍', color: '#90a4ae' };
 const floorShort = (id) => { const f = D.floors.find((x) => x.id === id); return f ? (f.short || f.name) : id; };
@@ -166,6 +212,8 @@ $$('#sideNav button').forEach((b) => b.addEventListener('click', () => {
   $$('#sideNav button').forEach((x) => x.classList.toggle('on', x === b));
   render();
 }));
+const ms = $('#mallSwitch');
+if (ms) ms.onchange = () => switchMall(ms.value);
 
 async function refresh() { await loadAll(); render(); }
 
@@ -173,6 +221,8 @@ async function refresh() { await loadAll(); render(); }
 function render() {
   const c = $('#content');
   if (tab === 'overview') c.innerHTML = viewOverview();
+  else if (tab === 'malls') c.innerHTML = viewMalls();
+  else if (tab === 'users') c.innerHTML = viewUsers();
   else if (tab === 'floors') c.innerHTML = viewFloors();
   else if (tab === 'shops') c.innerHTML = viewShops();
   else if (tab === 'facilities') c.innerHTML = viewFacilities();
@@ -1517,11 +1567,133 @@ function wireGraph() {
   });
 }
 
+/* ---------------- 商场管理（平台） ---------------- */
+function viewMalls() {
+  return `
+  <div class="page-head"><div><h1>商场管理</h1><div class="sub">多商场租户 · 各商场数据完全隔离（楼层/店铺/活动/屏幕/路网）</div></div>
+    <button class="btn primary" id="ml-add">＋ 新增商场</button></div>
+  <div class="card"><h3>商场列表（${malls.length}）· 当前操作：${esc((malls.find((x) => x.id === curMall) || {}).name || curMall || '—')}</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>ID</th><th>名称</th><th>状态</th><th>楼层</th><th>店铺</th><th>设施</th><th>活动</th><th>屏幕</th><th>节点</th><th>操作</th></tr></thead>
+      <tbody>${malls.map((mm) => `<tr>
+        <td class="mono">${esc(mm.id)}</td><td>${esc(mm.name)}</td>
+        <td>${mm.status === 'active' ? '✅ 启用' : '⛔ 停用'}</td>
+        <td class="mono">${mm.counts.floors}</td><td class="mono">${mm.counts.shops}</td><td class="mono">${mm.counts.facilities}</td>
+        <td class="mono">${mm.counts.promos}</td><td class="mono">${mm.counts.screens}</td><td class="mono">${mm.counts.nodes}</td>
+        <td><button class="btn sm" data-ml-switch="${esc(mm.id)}" ${mm.status === 'disabled' ? 'disabled' : ''}>进入管理</button>
+            <button class="btn sm" data-ml-toggle="${esc(mm.id)}">${mm.status === 'active' ? '停用' : '启用'}</button>
+            <button class="btn sm danger" data-ml-del="${esc(mm.id)}">删除</button></td></tr>`).join('')}</tbody>
+    </table></div>
+    <div class="help">「进入管理」把左侧所有模块切换到该商场的数据；商场账号登录后只能看到并操作自己所属商场。也可用顶部下拉快速切换。前台对应入口：<span class="mono">/?mall=商场ID</span>。</div>
+  </div>`;
+}
+function wireMalls() {
+  const add = $('#ml-add'); if (add) add.onclick = async () => {
+    const name = prompt('新商场名称（如：星悦广场）：');
+    if (!name || !name.trim()) return;
+    const r = await api('POST', '/api/malls', { name: name.trim() });
+    r.ok ? (toast('商场已创建', 'ok'), refresh()) : toast(r.error || '创建失败', 'err');
+  };
+  $$('[data-ml-switch]').forEach((b) => b.onclick = () => switchMall(b.dataset.mlSwitch));
+  $$('[data-ml-toggle]').forEach((b) => b.onclick = async () => {
+    const mm = malls.find((x) => x.id === b.dataset.mlToggle);
+    const to = mm.status === 'active' ? 'disabled' : 'active';
+    const r = await api('PUT', '/api/malls/' + mm.id, { status: to });
+    r.ok ? (toast(to === 'active' ? '已启用' : '已停用', 'ok'), refresh()) : toast(r.error || '失败', 'err');
+  });
+  $$('[data-ml-del]').forEach((b) => b.onclick = async () => {
+    const mm = malls.find((x) => x.id === b.dataset.mlDel);
+    if (!confirm(`⚠️ 将永久删除商场「${mm.name}」及其全部楼层/店铺/活动/屏幕/路网数据与账号，不可恢复！确认删除？`)) return;
+    const r = await api('DELETE', '/api/malls/' + b.dataset.mlDel);
+    r.ok ? (toast('已删除', 'ok'), refresh()) : toast(r.error || '删除失败', 'err');
+  });
+}
+
+/* ---------------- 用户与权限 ---------------- */
+const MALL_PERMS = ['floors', 'shops', 'facilities', 'promos', 'banners', 'standby', 'guide', 'screens', 'map', 'graph', 'settings'];
+const PERM_LABEL = { floors: '楼层', shops: '店铺', facilities: '设施', promos: '活动', banners: 'Banner', standby: '待机页', guide: '服务指南', screens: '多屏', map: '平面', graph: '路网', settings: '设置' };
+function permsText(perms) { return (!perms || !perms.length) ? '全部模块' : (perms.map((p) => PERM_LABEL[p] || p).join('、')); }
+function viewUsers() {
+  const isPlatform = me && me.role === 'platform';
+  const mallName = (id) => (malls.find((x) => x.id === id) || {}).name || id || '—';
+  return `
+  <div class="page-head"><div><h1>用户与权限</h1><div class="sub">${isPlatform ? '平台账号可跨商场；商场账号只能访问所属商场的数据与功能' : '为本商场创建与管理员工账号'}</div></div></div>
+  <div class="card"><h3>新建账号</h3>
+    <div class="form-grid">
+      <div class="field"><label>用户名（2-30 位字母/数字/._-）</label><input id="us-name" placeholder="如 mall2-manager" /></div>
+      <div class="field"><label>初始密码（≥6 位）</label><input id="us-pass" type="password" placeholder="密码" /></div>
+      ${isPlatform ? `<div class="field"><label>角色</label><select class="sel" id="us-role">
+        <option value="mall">商场账号</option><option value="platform">平台账号</option></select></div>
+      <div class="field"><label>所属商场（商场账号必选）</label><select class="sel" id="us-mall">
+        <option value="">— 选择商场 —</option>${malls.map((mm) => `<option value="${esc(mm.id)}">${esc(mm.name)}</option>`).join('')}</select></div>` : ''}
+    </div>
+    <div class="field" style="margin-top:10px"><label>模块权限（商场账号；不勾选 = 全部模块）</label>
+      <div class="chips">${MALL_PERMS.map((p) => `<label class="scr-mod"><input type="checkbox" data-us-perm="${p}"/> ${PERM_LABEL[p]}</label>`).join('')}</div></div>
+    <div class="form-actions"><button class="btn primary" id="us-add">创建账号</button></div>
+  </div>
+  <div class="card"><h3>账号列表（${users.length}）</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>用户名</th><th>角色</th><th>所属商场</th><th>模块权限</th><th>状态</th><th>最近登录</th><th>操作</th></tr></thead>
+      <tbody>${users.map((u) => `<tr>
+        <td class="mono">${esc(u.username)}</td>
+        <td>${u.role === 'platform' ? '🛡️ 平台' : '🏬 商场'}</td>
+        <td>${u.role === 'platform' ? '—' : esc(mallName(u.mallId))}</td>
+        <td class="mono">${u.role === 'platform' ? '—' : permsText(u.perms)}</td>
+        <td>${u.enabled !== false ? '✅ 启用' : '⛔ 停用'}</td>
+        <td class="mono">${esc((u.lastLoginAt || '').replace('T', ' ').slice(0, 16) || '—')}</td>
+        <td><button class="btn sm" data-us-pass="${esc(u.id)}">重置密码</button>
+            ${isPlatform || u.mallId === (me || {}).mallId ? `<button class="btn sm" data-us-perms="${esc(u.id)}" ${u.role === 'platform' ? 'disabled' : ''}>权限</button>
+            <button class="btn sm" data-us-toggle="${esc(u.id)}" ${u.id === (me || {}).id ? 'disabled' : ''}>${u.enabled !== false ? '停用' : '启用'}</button>
+            <button class="btn sm danger" data-us-del="${esc(u.id)}" ${u.id === (me || {}).id ? 'disabled' : ''}>删除</button>` : ''}</td></tr>`).join('')}</tbody>
+    </table></div>
+    <div class="help">商场账号登录后台后，左侧仅出现被授权的模块，且所有接口都被强制限定在本商场数据范围内（服务端隔离，前端隐藏仅为体验）。</div>
+  </div>`;
+}
+function wireUsers() {
+  const add = $('#us-add'); if (add) add.onclick = async () => {
+    const username = $('#us-name').value.trim(), password = $('#us-pass').value;
+    const perms = $$('[data-us-perm]').filter((c) => c.checked).map((c) => c.dataset.usPerm);
+    const body = { username, password, perms };
+    if (me && me.role === 'platform') {
+      body.role = $('#us-role').value;
+      body.mallId = $('#us-mall').value;
+      if (body.role === 'mall' && !body.mallId) return toast('请选择所属商场', 'err');
+    }
+    const r = await api('POST', '/api/users', body);
+    r.ok ? (toast('账号已创建', 'ok'), refresh()) : toast(r.error || '创建失败', 'err');
+  };
+  $$('[data-us-pass]').forEach((b) => b.onclick = async () => {
+    const np = prompt('为该账号设置新密码（≥6 位）：');
+    if (!np) return;
+    const r = await api('PUT', '/api/users/' + b.dataset.usPass, { newPassword: np });
+    r.ok ? toast('密码已重置', 'ok') : toast(r.error || '失败', 'err');
+  });
+  $$('[data-us-perms]').forEach((b) => b.onclick = async () => {
+    const u = users.find((x) => x.id === b.dataset.usPerms);
+    const cur = (u.perms || []).join(',');
+    const val = prompt('输入允许的模块（逗号分隔，留空 = 全部）：\n' + MALL_PERMS.join(', '), cur);
+    if (val === null) return;
+    const perms = val.split(',').map((x) => x.trim()).filter((x) => MALL_PERMS.includes(x));
+    const r = await api('PUT', '/api/users/' + u.id, { perms });
+    r.ok ? (toast('权限已更新', 'ok'), refresh()) : toast(r.error || '失败', 'err');
+  });
+  $$('[data-us-toggle]').forEach((b) => b.onclick = async () => {
+    const u = users.find((x) => x.id === b.dataset.usToggle);
+    const r = await api('PUT', '/api/users/' + u.id, { enabled: u.enabled === false });
+    r.ok ? (toast(u.enabled === false ? '已启用' : '已停用', 'ok'), refresh()) : toast(r.error || '失败', 'err');
+  });
+  $$('[data-us-del]').forEach((b) => b.onclick = async () => {
+    if (!confirm('确认删除该账号？')) return;
+    const r = await api('DELETE', '/api/users/' + b.dataset.usDel);
+    r.ok ? (toast('已删除', 'ok'), refresh()) : toast(r.error || '删除失败', 'err');
+  });
+}
+
 /* ---------------- 系统设置 ---------------- */
 function viewSettings() {
   const s = D.settings;
   return `
-  <div class="page-head"><div><h1>系统设置</h1><div class="sub">商场信息、显示参数与安全</div></div></div>
+  <div class="page-head"><div><h1>系统设置</h1><div class="sub">商场信息与显示参数（作用于当前商场：${esc(s.mallName || '')}）</div></div></div>
   <div class="card"><h3>商场信息</h3>
     <div class="form-grid">
       <div class="field"><label>商场名称</label><input id="st-name" value="${esc(s.mallName || '')}" /></div>
@@ -1533,14 +1705,7 @@ function viewSettings() {
       <div class="field"><label>待机页触发（秒无操作）</label><input class="inp" id="st-ss" type="number" value="${s.screensaverSeconds || 45}" /></div>
     </div>
     <div class="form-actions"><button class="btn primary" id="st-save">保存设置</button></div>
-    <div class="help">待机页的<b>内容与轮播参数</b>请在左侧「🖥️ 待机页配置」中维护；此处只控制触发时间（两处同步）。</div>
-  </div>
-  <div class="card"><h3>安全</h3>
-    <div class="form-grid">
-      <div class="field"><label>管理密码（留空则不修改）</label><input id="st-pass" type="password" placeholder="新密码" /></div>
-    </div>
-    <div class="form-actions"><button class="btn" id="st-savepass">修改密码</button></div>
-    <div class="help">⚠️ 管理接口使用请求头 token 鉴权（值等于管理密码），公网部署请务必改用 HTTPS 并设置强密码。</div>
+    <div class="help">待机页的<b>内容与轮播参数</b>请在左侧「🖥️ 待机页配置」中维护；账号与密码安全请前往「👥 用户与权限」。</div>
   </div>`;
 }
 function wireSettings() {
@@ -1554,18 +1719,13 @@ function wireSettings() {
     const r = await api('PUT', '/api/settings', body);
     r.ok ? (toast('设置已保存', 'ok'), refresh()) : toast(r.error || '保存失败', 'err');
   };
-  const sp = $('#st-savepass');
-  if (sp) sp.onclick = async () => {
-    const pass = $('#st-pass').value.trim();
-    if (!pass) return toast('请输入新密码', 'err');
-    const r = await api('PUT', '/api/settings', { adminPass: pass });
-    if (r.ok) { token = pass; localStorage.setItem(TOKEN_KEY, token); toast('密码已修改', 'ok'); $('#st-pass').value = ''; } else toast(r.error || '失败', 'err');
-  };
 }
 
 /* ---------------- 事件绑定分发 ---------------- */
 function wire() {
-  if (tab === 'floors') wireFloors();
+  if (tab === 'malls') wireMalls();
+  else if (tab === 'users') wireUsers();
+  else if (tab === 'floors') wireFloors();
   else if (tab === 'shops') wireShops();
   else if (tab === 'facilities') wireFacilities();
   else if (tab === 'promos') wirePromos();
@@ -1584,6 +1744,17 @@ async function boot() {
   showApp(); render();
 }
 if (token) {
-  // 校验 token 是否仍有效（通过一个管理接口探测）
-  api('GET', '/api/settings').then((r) => { if (r && r.ok) boot(); else showLogin(); }).catch(() => showLogin());
+  (async () => {
+    try {
+      // 新会话 token 优先
+      const r = await fetch('/api/auth/me', { headers: { 'x-auth-token': token } });
+      const j = await r.json().catch(() => null);
+      if (j && j.ok) { me = j.user; curMall = me.role === 'mall' ? me.mallId : curMall; await boot(); return; }
+      // 旧平台密码 token 兼容（升级前保存的 adminPass）
+      const r2 = await fetch('/api/settings', { headers: { 'x-admin-token': token } });
+      const j2 = await r2.json().catch(() => null);
+      if (j2 && j2.ok) { me = { username: 'admin', role: 'platform', perms: [] }; await boot(); return; }
+      showLogin();
+    } catch (e) { showLogin(); }
+  })();
 } else showLogin();

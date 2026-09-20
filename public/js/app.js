@@ -55,8 +55,19 @@ $$('#topnav .tn').forEach((b) => b.addEventListener('click', () => {
  * 远程更新：后台保存或「立即下发」令 rev+1，前台每 15s 轮询，rev 变化自动重新应用（免人工刷新）
  */
 const SCREEN_ID_KEY = 'mb_screen_id';
+const MALL_ID_KEY = 'mb_mall_id';
 let screenProfile = null;
 let screenId = '';
+let screenMall = '';          // 本屏所属商场（URL ?mall= / localStorage 记忆）
+window.__mallId = '';         // 当前已加载数据的商场（init 时由 /api/map 返回）
+function resolveMallHintSync() {
+  const qs = new URLSearchParams(location.search);
+  let mid = (qs.get('mall') || '').trim();
+  if (mid) { try { localStorage.setItem(MALL_ID_KEY, mid); } catch (e) { /* ignore */ } }
+  if (!mid) { try { mid = localStorage.getItem(MALL_ID_KEY) || ''; } catch (e) { /* ignore */ } }
+  screenMall = mid;
+  return mid;
+}
 
 function applyScreenProfile(p) {
   screenProfile = p;
@@ -108,7 +119,7 @@ function goScreenTab(t) {
 }
 
 async function bootScreen() {
-  // 1) 解析自身位置标识
+  // 1) 解析自身位置标识（screen）与所属商场（mall）
   const qs = new URLSearchParams(location.search);
   let sid = (qs.get('screen') || '').trim();
   if (sid) { try { localStorage.setItem(SCREEN_ID_KEY, sid); } catch (e) { /* ignore */ } }
@@ -116,13 +127,24 @@ async function bootScreen() {
   if (!sid) {
     try {
       const r = await fetch('/screen-id.json', { cache: 'no-store' });
-      if (r.ok) { const j = await r.json(); sid = (j && j.id) ? String(j.id).trim() : ''; }
+      if (r.ok) {
+        const j = await r.json();
+        sid = (j && j.id) ? String(j.id).trim() : '';
+        // 本地标识文件可声明所属商场；与当前加载商场不一致时重定向一次（带防循环标记）
+        if (j && j.mall && window.__mallId && j.mall !== window.__mallId && !sessionStorage.getItem('mb_mall_reload')) {
+          try { localStorage.setItem(MALL_ID_KEY, String(j.mall)); sessionStorage.setItem('mb_mall_reload', '1'); } catch (e) { /* ignore */ }
+          const u = new URL(location.href); u.searchParams.set('mall', String(j.mall));
+          location.replace(u.toString());
+          return;
+        }
+      }
     } catch (e) { /* ignore */ }
   }
   screenId = sid;
+  const mallParam = screenMall || window.__mallId || '';
   // 2) 拉取专属配置并应用
   try {
-    const r = await fetch('/api/screen/' + encodeURIComponent(sid || '-'), { cache: 'no-store' });
+    const r = await fetch('/api/screen/' + encodeURIComponent(sid || '-') + (mallParam ? '?mall=' + encodeURIComponent(mallParam) : ''), { cache: 'no-store' });
     const j = await r.json();
     if (j && j.ok) applyScreenProfile(j.data);
   } catch (e) { /* 离线兜底：保持默认界面 */ }
@@ -133,7 +155,7 @@ async function bootScreen() {
   setInterval(async () => {
     if (!screenProfile) return;
     try {
-      const r = await fetch('/api/screen/' + encodeURIComponent(screenId || '-'), { cache: 'no-store' });
+      const r = await fetch('/api/screen/' + encodeURIComponent(screenId || '-') + (mallParam ? '?mall=' + encodeURIComponent(mallParam) : ''), { cache: 'no-store' });
       const j = await r.json();
       if (!j || !j.ok) return;
       if (j.data.rev !== screenProfile.rev) {
@@ -994,8 +1016,10 @@ document.addEventListener('keydown', () => { if (!$('#screensaver').classList.co
 
 /* ---------------- 初始化 ---------------- */
 async function init() {
-  try { M = await getJSON('/api/map'); } catch (e) { alert('无法连接导视服务，请确认服务已启动。'); return; }
+  const mallHint = resolveMallHintSync();
+  try { M = await getJSON('/api/map' + (mallHint ? '?mall=' + encodeURIComponent(mallHint) : '')); } catch (e) { alert('无法连接导视服务，请确认服务已启动。'); return; }
   if (!M || !M.ok) { alert('导视数据加载失败。'); return; }
+  window.__mallId = M.mallId || '';
   floors = M.floors || []; shops = M.shops || []; facilities = M.facilities || [];
   promos = M.promos || []; banners = M.banners || []; graph = M.graph || { nodes: [], edges: [] };
   settings = M.settings || {}; cats = M.categories || []; facTypes = M.facilityTypes || [];
