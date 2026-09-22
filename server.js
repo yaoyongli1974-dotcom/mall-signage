@@ -397,6 +397,7 @@ function normalizeDb(parsed) {
     mm.name = (typeof mm.name === 'string' && mm.name.trim()) ? mm.name.trim().slice(0, 40) : '商场 ' + mm.id;
     mm.status = mm.status === 'disabled' ? 'disabled' : 'active';
     mm.note = (typeof mm.note === 'string') ? mm.note.slice(0, 200) : '';
+    mm.logo = (typeof mm.logo === 'string') ? mm.logo : '';
     mm.createdAt = mm.createdAt || new Date().toISOString();
     mm.data = normalizeMallData(mm.data);
   });
@@ -962,7 +963,7 @@ async function handleApi(req, res, method, pathname, parsed) {
   function userOut(u) { const { id, username, role, mallId, perms, enabled, createdAt, lastLoginAt } = u; return { id, username, role, mallId, perms, enabled, createdAt, lastLoginAt }; }
   function mallOut(mm) {
     return {
-      id: mm.id, name: mm.name, status: mm.status, note: mm.note, createdAt: mm.createdAt,
+      id: mm.id, name: mm.name, status: mm.status, note: mm.note, createdAt: mm.createdAt, logo: mm.logo || '',
       counts: {
         floors: mm.data.floors.length, shops: mm.data.shops.length, facilities: mm.data.facilities.length,
         promos: mm.data.promos.length, banners: mm.data.banners.length,
@@ -1005,6 +1006,7 @@ async function handleApi(req, res, method, pathname, parsed) {
       facilityTypes: FACILITY_TYPES,
       settings: {
         mallName: M.settings.mallName || '商场智能导视系统',
+        mallLogo: (db.malls.find((x) => x.id === MID) || {}).logo || '',
         slogan: M.settings.slogan || '',
         address: M.settings.address || '',
         servicePhone: M.settings.servicePhone || '',
@@ -1112,7 +1114,7 @@ async function handleApi(req, res, method, pathname, parsed) {
       let id = normScreenId(b.id);
       if (!id) id = 'M' + (db.malls.reduce((mx, x) => Math.max(mx, Number(String(x.id).replace(/\D/g, '')) || 0), 0) + 1);
       if (mallById(id)) return sendJson(res, 400, { ok: false, error: '商场 ID 已存在：' + id });
-      const mm = { id, name: name.slice(0, 40), status: 'active', note: String(b.note || '').slice(0, 200), createdAt: new Date().toISOString(), data: normalizeMallData({ settings: { mallName: name } }) };
+      const mm = { id, name: name.slice(0, 40), status: 'active', note: String(b.note || '').slice(0, 200), logo: '', createdAt: new Date().toISOString(), data: normalizeMallData({ settings: { mallName: name } }) };
       db.malls.push(mm);
       saveDb();
       return sendJson(res, 200, { ok: true, data: mallOut(mm) });
@@ -1128,6 +1130,7 @@ async function handleApi(req, res, method, pathname, parsed) {
       const b = await readBody(req);
       if (b.name != null && String(b.name).trim()) { mm.name = String(b.name).trim().slice(0, 40); mm.data.settings.mallName = mm.data.settings.mallName || mm.name; }
       if (b.note != null) mm.note = String(b.note).slice(0, 200);
+      if (b.logo != null) mm.logo = String(b.logo).slice(0, 400);
       if (b.status === 'active' || b.status === 'disabled') {
         if (b.status === 'disabled' && mm.status !== 'disabled' && db.malls.filter((x) => x.status !== 'disabled').length <= 1) {
           return sendJson(res, 400, { ok: false, error: '不能停用最后一个启用中的商场' });

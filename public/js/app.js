@@ -1014,6 +1014,16 @@ function resetIdle() {
 document.addEventListener('pointerdown', () => { if (!$('#screensaver').classList.contains('active')) resetIdle(); }, true);
 document.addEventListener('keydown', () => { if (!$('#screensaver').classList.contains('active')) resetIdle(); }, true);
 
+/* ---------------- 商场 LOGO 动态应用 ---------------- */
+function applyMallLogo(logo) {
+  const top = $('#mallLogo'), topEmoji = $('#brandLogo');
+  if (logo) { if (top) { top.src = logo; top.hidden = false; } if (topEmoji) topEmoji.style.display = 'none'; }
+  else { if (top) top.hidden = true; if (topEmoji) topEmoji.style.display = ''; }
+  const ss = $('#ssMallLogo'), ssEmoji = $('#ssLogo');
+  if (logo) { if (ss) { ss.src = logo; ss.hidden = false; } if (ssEmoji) ssEmoji.style.display = 'none'; }
+  else { if (ss) ss.hidden = true; if (ssEmoji) ssEmoji.style.display = ''; }
+}
+
 /* ---------------- 初始化 ---------------- */
 async function init() {
   const mallHint = resolveMallHintSync();
@@ -1028,6 +1038,7 @@ async function init() {
   $('#mallName').textContent = settings.mallName || '商场智能导视';
   $('#mallSlogan').textContent = settings.slogan || '';
   document.title = (settings.mallName || '商场') + ' · 智能导视系统';
+  applyMallLogo(settings.mallLogo);
 
   activeFloorId = (floors[0] || {}).id;
   viewFloor = createMapView($('#mapSvg'));

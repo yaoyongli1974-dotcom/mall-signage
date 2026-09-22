@@ -310,6 +310,7 @@ mall-signage/
 - **server.js**：`normalizeDb` 拆分为 v2 结构 + 自动迁移；全部业务路由（楼层/店铺/设施/活动/Banner/路网/待机/指南/多屏/设置）由 `db.*` 切换为商场上下文 `M.*`；新增 `/api/auth/*`、`/api/malls*`、`/api/users*`；启动自愈改为逐商场执行
 - **admin.html / admin.js**：登录改为「用户名 + 密码」；侧栏角色感知（平台专属页签 + 商场切换器下拉）；新增「🏬 商场管理」「👥 用户与权限」；系统设置移除管理密码（改由用户管理）
 - **app.js（前台）**：新增 `?mall=` 商场解析（URL → localStorage → screen-id.json.mall → 默认第一个商场）；`/api/map`、`/api/screen` 均带商场上下文
+- **商场专属 LOGO**：后台「🏬 商场管理」列表新增 LOGO 列与「编辑」弹窗，可为每个商场单独上传 LOGO（复用 `/api/upload/asset`，前缀 `mall`，≤4MB）；保存后 `db.malls[].logo` 按商场隔离；前台顶栏（`#mallLogo`）与待机页品牌（`#ssMallLogo`）在 `/api/map` 的 `settings.mallLogo` 下发后按当前商场动态显示，有 LOGO 时自动隐藏 🧭 占位，确保各商场互不混淆
 
 ### 3）数据迁移注意事项
 

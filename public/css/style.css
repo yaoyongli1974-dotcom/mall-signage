@@ -57,6 +57,9 @@ html, body {
   border-radius: 15px; background: linear-gradient(135deg, var(--accent), var(--accent-2));
   box-shadow: 0 8px 22px rgba(77, 141, 255, 0.4);
 }
+.mall-logo { width: 52px; height: 52px; border-radius: 15px; object-fit: contain; background: rgba(255, 255, 255, 0.08); border: 1px solid var(--line); display: none; }
+.mall-logo[hidden] { display: none; }
+.mall-logo:not([hidden]) { display: block; }
 .mall-name { font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
 .mall-slogan { font-size: 13px; color: var(--muted); margin-top: 2px; }
 .topnav { flex: 1; display: flex; gap: 10px; justify-content: center; }
@@ -366,6 +369,9 @@ main { position: relative; flex: 1; overflow: hidden; }
 /* 待机页固定元素（不响应指针，避免影响互动页） */
 .ss-brand { position: absolute; top: 34px; left: 44px; z-index: 5; display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
 .ss-brand .ss-logo { font-size: 26px; }
+.ss-mall-logo { width: 42px; height: 42px; border-radius: 11px; object-fit: contain; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); display: none; }
+.ss-mall-logo[hidden] { display: none; }
+.ss-mall-logo:not([hidden]) { display: block; }
 .ss-clock { position: absolute; top: 28px; right: 44px; z-index: 5; font-size: 42px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: 1px; pointer-events: none; transition: opacity .4s; }
 .ss-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; z-index: 6; background: rgba(255, 255, 255, 0.14); pointer-events: none; }
 .ss-progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #4d8dff, #7b5cff); }

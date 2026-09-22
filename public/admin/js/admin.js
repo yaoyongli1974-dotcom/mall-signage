@@ -1574,20 +1574,69 @@ function viewMalls() {
     <button class="btn primary" id="ml-add">＋ 新增商场</button></div>
   <div class="card"><h3>商场列表（${malls.length}）· 当前操作：${esc((malls.find((x) => x.id === curMall) || {}).name || curMall || '—')}</h3>
     <div class="table-wrap"><table>
-      <thead><tr><th>ID</th><th>名称</th><th>状态</th><th>楼层</th><th>店铺</th><th>设施</th><th>活动</th><th>屏幕</th><th>节点</th><th>操作</th></tr></thead>
+      <thead><tr><th>ID</th><th>LOGO</th><th>名称</th><th>状态</th><th>楼层</th><th>店铺</th><th>设施</th><th>活动</th><th>屏幕</th><th>节点</th><th>操作</th></tr></thead>
       <tbody>${malls.map((mm) => `<tr>
-        <td class="mono">${esc(mm.id)}</td><td>${esc(mm.name)}</td>
+        <td class="mono">${esc(mm.id)}</td>
+        <td>${mm.logo ? `<img class="mall-logo-sm" src="${esc(mm.logo)}" alt="${esc(mm.name)}" />` : '<span class="mall-logo-sm empty">🏬</span>'}</td>
+        <td>${esc(mm.name)}</td>
         <td>${mm.status === 'active' ? '✅ 启用' : '⛔ 停用'}</td>
         <td class="mono">${mm.counts.floors}</td><td class="mono">${mm.counts.shops}</td><td class="mono">${mm.counts.facilities}</td>
         <td class="mono">${mm.counts.promos}</td><td class="mono">${mm.counts.screens}</td><td class="mono">${mm.counts.nodes}</td>
-        <td><button class="btn sm" data-ml-switch="${esc(mm.id)}" ${mm.status === 'disabled' ? 'disabled' : ''}>进入管理</button>
+        <td><button class="btn sm" data-ml-edit="${esc(mm.id)}">编辑</button>
+            <button class="btn sm" data-ml-switch="${esc(mm.id)}" ${mm.status === 'disabled' ? 'disabled' : ''}>进入管理</button>
             <button class="btn sm" data-ml-toggle="${esc(mm.id)}">${mm.status === 'active' ? '停用' : '启用'}</button>
             <button class="btn sm danger" data-ml-del="${esc(mm.id)}">删除</button></td></tr>`).join('')}</tbody>
     </table></div>
-    <div class="help">「进入管理」把左侧所有模块切换到该商场的数据；商场账号登录后只能看到并操作自己所属商场。也可用顶部下拉快速切换。前台对应入口：<span class="mono">/?mall=商场ID</span>。</div>
+    <div class="help">「编辑」可修改商场名称、备注并上传专属 LOGO（前台顶栏与待机页将按当前商场动态显示）；「进入管理」把左侧所有模块切换到该商场的数据；商场账号登录后只能看到并操作自己所属商场。也可用顶部下拉快速切换。前台对应入口：<span class="mono">/?mall=商场ID</span>。</div>
   </div>`;
 }
+function openMallEdit(id) {
+  const mm = malls.find((x) => x.id === id);
+  if (!mm) return;
+  const dlg = $('#dlg');
+  dlg.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">编辑商场 · ${esc(mm.name)}</div>
+      <div class="form-grid">
+        <div class="field"><label>商场名称</label><input id="ml-name" value="${esc(mm.name)}" maxlength="40" /></div>
+        <div class="field"><label>备注</label><input id="ml-note" value="${esc(mm.note || '')}" maxlength="200" /></div>
+      </div>
+      <div class="field" style="margin-top:10px"><label>商场专属 LOGO</label>
+        <div class="logo-row">
+          <div class="logo-preview" id="ml-logo-prev">${mm.logo ? `<img src="${esc(mm.logo)}" alt="logo" />` : '<span class="help">未上传</span>'}</div>
+          <div>
+            <input type="file" id="ml-logo-file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" />
+            <div class="help">PNG / JPG / WEBP / SVG / GIF，≤4MB；建议透明背景、正方形</div>
+          </div>
+          <button class="btn sm" id="ml-logo-clear" type="button">清除</button>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn" id="ml-cancel">取消</button>
+        <button class="btn primary" id="ml-save">保存</button>
+      </div>
+    </div>`;
+  dlg.onclick = (e) => { if (e.target === dlg) closeDlg(); };
+  dlg.hidden = false;
+  let logo = mm.logo || '';
+  const fileEl = $('#ml-logo-file');
+  fileEl.onchange = async () => {
+    const f = fileEl.files && fileEl.files[0]; if (!f) return;
+    try { const url = await uploadAsset(f, 'mall'); logo = url; $('#ml-logo-prev').innerHTML = `<img src="${esc(url)}" alt="logo" />`; toast('LOGO 已上传', 'ok'); }
+    catch (e) { toast(e.message || '上传失败', 'err'); }
+  };
+  $('#ml-logo-clear').onclick = () => { logo = ''; $('#ml-logo-prev').innerHTML = '<span class="help">未上传</span>'; };
+  $('#ml-cancel').onclick = closeDlg;
+  $('#ml-save').onclick = async () => {
+    const name = $('#ml-name').value.trim();
+    if (!name) { toast('请填写商场名称', 'err'); return; }
+    const r = await api('PUT', '/api/malls/' + mm.id, { name, note: $('#ml-note').value.trim(), logo });
+    if (r.ok) { toast('已保存', 'ok'); closeDlg(); refresh(); } else toast(r.error || '保存失败', 'err');
+  };
+}
+function closeDlg() { const d = $('#dlg'); if (d) { d.hidden = true; d.innerHTML = ''; } }
 function wireMalls() {
+  $$('[data-ml-edit]').forEach((b) => b.onclick = () => openMallEdit(b.dataset.mlEdit));
   const add = $('#ml-add'); if (add) add.onclick = async () => {
     const name = prompt('新商场名称（如：星悦广场）：');
     if (!name || !name.trim()) return;
